@@ -52,11 +52,10 @@ export default function Home() {
 
   return (
     <Box p={8}>
-      <Text as="h1" fontSize="2xl" fontWeight="bold" mb={6}>
+      <Text as="h1" fontSize="2xl" fontWeight="bold" mb={6} textAlign="center">
         오늘의 학습 추천 기사
       </Text>
-      <Flex align="center">
-        {/* 왼쪽 슬라이더 */}
+      <Flex align="center" justify="center">
         <IconButton
           aria-label="이전"
           icon={<ChevronLeftIcon boxSize={6} />}
@@ -65,8 +64,7 @@ export default function Home() {
           variant="ghost"
           mr={2}
         />
-        {/* 카드 리스트 */}
-        <Flex gap={4} flex="1">
+        <Flex gap={4} flexWrap="nowrap" justify="center">
           {visibleArticles.map((article, idx) => (
             <Box
               key={idx}
@@ -76,7 +74,7 @@ export default function Home() {
               p={4}
               minW="220px"
               maxW="220px"
-              flex="0 0 220px"
+              flex="0 0 auto"
               display="flex"
               flexDirection="column"
               alignItems="center"
@@ -98,7 +96,6 @@ export default function Home() {
             </Box>
           ))}
         </Flex>
-        {/* 오른쪽 슬라이더 */}
         <IconButton
           aria-label="다음"
           icon={<ChevronRightIcon boxSize={6} />}
