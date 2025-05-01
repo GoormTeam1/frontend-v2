@@ -5,7 +5,7 @@ import { Box, Heading, Flex, Button, Text } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 
 export default function Header() {
-  const [formattedDate, setFormattedDate] = useState<string | null>(null);
+  const [formattedDate, setFormattedDate] = useState("");
 
   useEffect(() => {
     const today = new Date();
