@@ -1,4 +1,6 @@
 // components/Footer.tsx
+
+"use client"; 
 import { Box, Text } from "@chakra-ui/react";
 
 export default function Footer() {

@@ -1,103 +1,153 @@
-import Image from "next/image";
+"use client";
+import {
+  Box,
+  Flex,
+  Image,
+  Text,
+  Button,
+  IconButton,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  Stack,
+} from "@chakra-ui/react";
+import { useState } from "react";
+import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from "@chakra-ui/icons";
+
+const articles = [
+  {
+    image:
+      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=400&h=200",
+    press: "조선일보",
+    title: "AI가 바꿀 미래 사회",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=facearea&w=400&h=200",
+    press: "한겨레",
+    title: "환경 보호, 우리가 할 수 있는 일",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=facearea&w=400&h=200",
+    press: "중앙일보",
+    title: "스마트폰 중독, 어떻게 극복할까?",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=facearea&w=400&h=200",
+    press: "동아일보",
+    title: "미래의 직업, 무엇이 달라질까?",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1465101178521-c1a9136a3b99?auto=format&fit=facearea&w=400&h=200",
+    press: "매일경제",
+    title: "경제 읽기, 청소년을 위한 팁",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=facearea&w=400&h=200",
+    press: "서울신문",
+    title: "도시와 자연의 공존",
+  },
+];
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [startIdx, setStartIdx] = useState(0);
+  const visibleCount = 4;
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  const handlePrev = () => {
+    setStartIdx((prev) => Math.max(prev - 1, 0));
+  };
+
+  const handleNext = () => {
+    setStartIdx((prev) => Math.min(prev + 1, articles.length - visibleCount));
+  };
+
+  const visibleArticles = articles.slice(startIdx, startIdx + visibleCount);
+
+  return (
+    <Box p={8}>
+      {/* 제목 */}
+      <Text as="h1" fontSize="2xl" fontWeight="bold" mb={8} textAlign="center">
+        오늘의 학습 추천 기사
+      </Text>
+
+      {/* 카드 슬라이더 */}
+      <Flex align="center" justify="center" mb={10}>
+        <IconButton
+          aria-label="이전"
+          icon={<ChevronLeftIcon boxSize={6} />}
+          onClick={handlePrev}
+          isDisabled={startIdx === 0}
+          variant="ghost"
+          mr={2}
+        />
+        <Flex gap={4} flexWrap="nowrap" justify="center">
+          {visibleArticles.map((article, idx) => (
+            <Box
+              key={idx}
+              bg="white"
+              borderRadius="md"
+              boxShadow="md"
+              overflow="hidden"
+              //p={4}
+              minW="220px"
+              maxW="220px"
+              flex="0 0 auto"
+              //display="flex"
+              //flexDirection="column"
+              //alignItems="center"
+            >
+              <Image
+                src={article.image}
+                alt={article.title}
+                width="100%"
+                height="140px"
+                objectFit="cover"
+                mb={4}
+              />
+              <Text fontSize="sm" color="gray.500" mb={1} pl={8} >
+                {article.press}
+              </Text>
+              <Text fontWeight="semibold" textAlign="center" pl={4} >
+                {article.title}
+              </Text>
+            </Box>
+          ))}
+        </Flex>
+        <IconButton
+          aria-label="다음"
+          icon={<ChevronRightIcon boxSize={6} />}
+          onClick={handleNext}
+          isDisabled={startIdx >= articles.length - visibleCount}
+          variant="ghost"
+          ml={2}
+        />
+      </Flex>
+
+      {/* 뉴스 검색 영역 */}
+      <Box maxW="600px" mx="auto">
+        <Text mb={4} fontWeight="semibold">
+          뉴스 검색
+        </Text>
+        <InputGroup mb={4}>
+          <InputLeftElement pointerEvents="none">
+            <SearchIcon color="gray.400" />
+          </InputLeftElement>
+          <Input placeholder="키워드를 입력하세요" />
+        </InputGroup>
+
+        {/* 카테고리 버튼 */}
+        <Stack direction="row" spacing={4} justify="center">
+          {["IT", "경제", "사회", "문화", "국제", "스포츠"].map((cat) => (
+            <Button key={cat} variant="outline" size="sm" colorScheme="purple">
+              {cat}
+            </Button>
+          ))}
+        </Stack>
+      </Box>
+    </Box>
   );
 }
