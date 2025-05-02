@@ -15,13 +15,13 @@ import {
   Text,
   useToast,
   Select,
-  useColorModeValue,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import Footer from "../../components/Footer";
 
-const categories = ["정치", "경제", "사회", "국제", "문화", "연예", "스포츠", "IT/과학", "생활/건강"];
+const categories = ["경제", "사회", "국제", "문화", "연예", "스포츠", "IT", "과학", "생활"];
 const levels = ["초급", "중급", "고급"];
 
 export default function SignupPage() {
@@ -156,11 +156,10 @@ export default function SignupPage() {
           duration: 3000,
           isClosable: true,
         });
+
         setTimeout(() => {
           router.push("/login");
         }, 2000);
-
-        router.push("/login");
       } catch (error: any) {
         const msg = error.response?.data?.message || "회원가입 중 오류가 발생했습니다.";
         toast({
@@ -176,140 +175,142 @@ export default function SignupPage() {
   };
 
   return (
-    <Flex minH="calc(100vh - 4rem)" justify="center" align="center" bg="purple.50" py={12}>
-      <Box
-        as="form"
-        onSubmit={handleSubmit}
-        bg="white"
-        p={10}
-        rounded="md"
-        shadow="lg"
-        maxW="lg"
-        w="full"
-      >
-        <Stack spacing={6}>
-          <Heading size="lg" textAlign="center" color="purple.700">
-            회원가입
-          </Heading>
+    <Box minH="100vh" bg="purple.50" display="flex" flexDirection="column">
+      <Flex flex="1" justify="center" align="center" py={12}>
+        <Box
+          as="form"
+          onSubmit={handleSubmit}
+          bg="white"
+          p={10}
+          rounded="md"
+          shadow="lg"
+          maxW="lg"
+          w="full"
+        >
+          <Stack spacing={6}>
+            <Heading size="lg" textAlign="center" color="purple.700">
+              회원가입
+            </Heading>
 
-          {step === 1 ? (
-            <>
-              <FormControl isRequired>
-                <FormLabel>이름</FormLabel>
-                <Input value={name} onChange={(e) => setName(e.target.value)} />
-              </FormControl>
+            {step === 1 ? (
+              <>
+                <FormControl isRequired>
+                  <FormLabel>이름</FormLabel>
+                  <Input value={name} onChange={(e) => setName(e.target.value)} />
+                </FormControl>
 
-              <FormControl isRequired>
-                <FormLabel>이메일</FormLabel>
-                <Flex gap={2}>
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setIsEmailAvailable(false);
-                      setIsEmailChecked(false);
-                    }}
-                  />
-                  <Button colorScheme="green" onClick={checkEmail}>
-                    중복 확인
-                  </Button>
-                </Flex>
-              </FormControl>
-
-              <FormControl isRequired>
-                <FormLabel>비밀번호</FormLabel>
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </FormControl>
-
-              <FormControl isRequired>
-                <FormLabel>비밀번호 확인</FormLabel>
-                <Input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </FormControl>
-
-              <Button type="submit" colorScheme="purple" size="lg">
-                다음
-              </Button>
-            </>
-          ) : (
-            <>
-              <Text textAlign="center" fontSize="sm" color="gray.600">
-                추천 기사를 위해 아래 정보를 입력해주세요
-              </Text>
-
-              <FormControl isRequired>
-                <FormLabel>성별</FormLabel>
-                <Select value={gender} onChange={(e) => setGender(e.target.value)}>
-                  <option value="">선택</option>
-                  <option value="남성">남성</option>
-                  <option value="여성">여성</option>
-                </Select>
-              </FormControl>
-
-              <FormControl isRequired>
-                <FormLabel>나이</FormLabel>
-                <Input
-                  type="number"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
-                />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>관심 분야 (1개 이상)</FormLabel>
-                <Stack spacing={2}>
-                  {categories.map((cat) => (
-                    <Checkbox
-                      key={cat}
-                      isChecked={selectedCategories.includes(cat)}
-                      onChange={() => {
-                        if (selectedCategories.includes(cat)) {
-                          setSelectedCategories((prev) => prev.filter((c) => c !== cat));
-                        } else {
-                          setSelectedCategories((prev) => [...prev, cat]);
-                        }
+                <FormControl isRequired>
+                  <FormLabel>이메일</FormLabel>
+                  <Flex gap={2}>
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setIsEmailAvailable(false);
+                        setIsEmailChecked(false);
                       }}
-                    >
-                      {cat}
-                    </Checkbox>
-                  ))}
-                </Stack>
-              </FormControl>
+                    />
+                    <Button colorScheme="green" onClick={checkEmail}>
+                      중복 확인
+                    </Button>
+                  </Flex>
+                </FormControl>
 
+                <FormControl isRequired>
+                  <FormLabel>비밀번호</FormLabel>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </FormControl>
 
-              <FormControl isRequired>
-                <FormLabel>영어 학습 난이도</FormLabel>
-                <RadioGroup value={level} onChange={setLevel}>
-                  <Stack direction="row" spacing={4}>
-                    {levels.map((lvl) => (
-                      <Radio key={lvl} value={lvl} colorScheme="purple">
-                        {lvl}
-                      </Radio>
+                <FormControl isRequired>
+                  <FormLabel>비밀번호 확인</FormLabel>
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </FormControl>
+
+                <Button type="submit" colorScheme="purple" size="lg">
+                  다음
+                </Button>
+              </>
+            ) : (
+              <>
+                <Text textAlign="center" fontSize="sm" color="gray.600">
+                  추천 기사를 위해 아래 정보를 입력해주세요
+                </Text>
+
+                <FormControl isRequired>
+                  <FormLabel>성별</FormLabel>
+                  <Select value={gender} onChange={(e) => setGender(e.target.value)}>
+                    <option value="">선택</option>
+                    <option value="남성">남성</option>
+                    <option value="여성">여성</option>
+                  </Select>
+                </FormControl>
+
+                <FormControl isRequired>
+                  <FormLabel>나이</FormLabel>
+                  <Input
+                    type="number"
+                    value={age}
+                    onChange={(e) => setAge(e.target.value)}
+                  />
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel>관심 분야 (1개 이상)</FormLabel>
+                  <Stack spacing={2}>
+                    {categories.map((cat) => (
+                      <Checkbox
+                        key={cat}
+                        isChecked={selectedCategories.includes(cat)}
+                        onChange={() => {
+                          if (selectedCategories.includes(cat)) {
+                            setSelectedCategories((prev) => prev.filter((c) => c !== cat));
+                          } else {
+                            setSelectedCategories((prev) => [...prev, cat]);
+                          }
+                        }}
+                      >
+                        {cat}
+                      </Checkbox>
                     ))}
                   </Stack>
-                </RadioGroup>
-              </FormControl>
+                </FormControl>
 
-              <Flex justify="space-between">
-                <Button variant="outline" onClick={() => setStep(1)}>
-                  이전
-                </Button>
-                <Button type="submit" colorScheme="purple">
-                  가입 완료
-                </Button>
-              </Flex>
-            </>
-          )}
-        </Stack>
-      </Box>
-    </Flex>
+                <FormControl isRequired>
+                  <FormLabel>영어 학습 난이도</FormLabel>
+                  <RadioGroup value={level} onChange={setLevel}>
+                    <Stack direction="row" spacing={4}>
+                      {levels.map((lvl) => (
+                        <Radio key={lvl} value={lvl} colorScheme="purple">
+                          {lvl}
+                        </Radio>
+                      ))}
+                    </Stack>
+                  </RadioGroup>
+                </FormControl>
+
+                <Flex justify="space-between">
+                  <Button variant="outline" onClick={() => setStep(1)}>
+                    이전
+                  </Button>
+                  <Button type="submit" colorScheme="purple">
+                    가입 완료
+                  </Button>
+                </Flex>
+              </>
+            )}
+          </Stack>
+        </Box>
+      </Flex>
+      <Footer />
+    </Box>
   );
 }

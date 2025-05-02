@@ -3,10 +3,10 @@
 
 import { Box, Heading, Flex, Button, Text } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-
+import { useRouter } from "next/navigation";
 export default function Header() {
   const [formattedDate, setFormattedDate] = useState("");
-
+  const router = useRouter();
   useEffect(() => {
     const today = new Date();
     const dateStr = today.toLocaleDateString("ko-KR", {
@@ -32,10 +32,10 @@ export default function Header() {
 
         {/* 오른쪽: 로그인 / 회원가입 */}
         <Box>
-          <Button colorScheme="purple" variant="ghost" size="sm" mr={2}>
+          <Button colorScheme="purple" variant="ghost" size="sm" mr={2} onClick={() => router.push("/login")}>
             로그인
           </Button>
-          <Button colorScheme="purple" size="sm">
+          <Button colorScheme="purple" size="sm" onClick={() => router.push("/signup")}>
             회원가입
           </Button>
         </Box>
