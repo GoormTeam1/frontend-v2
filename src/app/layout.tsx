@@ -7,7 +7,7 @@ import Providers from "../components/providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Goorm Team1",
+  title: "NeWordS",
   description: "영문 뉴스 기반 AI 영어 학습 웹 애플리케이션",
 };
 

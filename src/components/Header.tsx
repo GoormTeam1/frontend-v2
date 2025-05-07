@@ -43,8 +43,8 @@ export default function Header() {
 
       {/* 가운데: 팀명 (절대 중앙 정렬) */}
       <Box position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)">
-        <Heading size="md" textAlign="center">
-          Goorm Team1
+        <Heading size="xl" textAlign="center">
+          NeWordS
         </Heading>
       </Box>
     </Box>
