@@ -7,45 +7,75 @@ import {
   Text,
   IconButton,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 
-const articles = [
-  {
-    image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=facearea&w=400&h=200",
-    press: "조선일보",
-    title: "AI가 바꿀 미래 사회",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=facearea&w=400&h=200",
-    press: "한겨레",
-    title: "환경 보호, 우리가 할 수 있는 일",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=facearea&w=400&h=200",
-    press: "중앙일보",
-    title: "스마트폰 중독, 어떻게 극복할까?",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=facearea&w=400&h=200",
-    press: "동아일보",
-    title: "미래의 직업, 무엇이 달라질까?",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1465101178521-c1a9136a3b99?auto=format&fit=facearea&w=400&h=200",
-    press: "매일경제",
-    title: "경제 읽기, 청소년을 위한 팁",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=facearea&w=400&h=200",
-    press: "서울신문",
-    title: "도시와 자연의 공존",
-  },
-];
+interface NewsArticle {
+  id: number;
+  title: string;
+  summary: string;
+  category: string;
+  image: string;
+  sourceLink: string;
+  publishedAt: string;
+  createAt: string;
+}
+
+interface NewsResponse {
+  content: NewsArticle[];
+  totalPages: number;
+  totalElements: number;
+  last: boolean;
+  first: boolean;
+  number: number;
+  size: number;
+  sort: Array<{
+    property: string;
+    direction: string;
+  }>;
+  numberOfElements: number;
+  empty: boolean;
+}
+
+// 기본 이미지 URL
+const DEFAULT_IMAGE = "https://via.placeholder.com/400x200?text=No+Image";
+
+// 날짜 포맷팅 함수
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+};
 
 export default function ArticleSlider() {
   const [startIdx, setStartIdx] = useState(0);
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const visibleCount = 4;
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        const response = await fetch('http://172.16.24.156:8082/api/news');
+        if (!response.ok) {
+          throw new Error('API 요청 실패');
+        }
+        const data: NewsResponse = await response.json();
+        console.log('API 응답:', data);
+        setArticles(data.content);
+      } catch (error) {
+        console.error('뉴스 데이터를 불러오는데 실패했습니다:', error);
+        setError('데이터를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArticles();
+  }, []);
 
   const handlePrev = () => {
     setStartIdx((prev) => Math.max(prev - 1, 0));
@@ -56,6 +86,22 @@ export default function ArticleSlider() {
   };
 
   const visibleArticles = articles.slice(startIdx, startIdx + visibleCount);
+
+  if (loading) {
+    return (
+      <Box textAlign="center" py={8}>
+        <Text>로딩 중...</Text>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box textAlign="center" py={8}>
+        <Text color="red.500">{error}</Text>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -72,9 +118,9 @@ export default function ArticleSlider() {
           mr={2}
         />
         <Flex gap={4} flexWrap="nowrap" justify="center">
-          {visibleArticles.map((article, idx) => (
+          {visibleArticles.map((article) => (
             <Box
-              key={idx}
+              key={article.id}
               bg="white"
               borderRadius="md"
               boxShadow="md"
@@ -82,21 +128,38 @@ export default function ArticleSlider() {
               minW="220px"
               maxW="220px"
               flex="0 0 auto"
+              as="a"
+              href={article.sourceLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              _hover={{ transform: 'translateY(-4px)', transition: 'transform 0.2s' }}
             >
               <Image
-                src={article.image}
+                src={article.image || DEFAULT_IMAGE}
                 alt={article.title}
                 width="100%"
                 height="140px"
                 objectFit="cover"
                 mb={4}
+                fallbackSrc={DEFAULT_IMAGE}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = DEFAULT_IMAGE;
+                }}
               />
-              <Text fontSize="sm" color="gray.500" mb={1} mx={4}>
-                {article.press}
-              </Text>
-              <Text fontWeight="semibold" mx={4} mb={6}>
-                {article.title}
-              </Text>
+              <Flex direction="column" px={4} mb={6}>
+                <Flex justify="space-between" align="center" mb={1}>
+                  <Text fontSize="sm" color="gray.500">
+                    {article.category}
+                  </Text>
+                  <Text fontSize="xs" color="gray.400">
+                    {formatDate(article.publishedAt)}
+                  </Text>
+                </Flex>
+                <Text fontWeight="semibold" noOfLines={2}>
+                  {article.title}
+                </Text>
+              </Flex>
             </Box>
           ))}
         </Flex>
