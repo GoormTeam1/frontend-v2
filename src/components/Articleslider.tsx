@@ -54,7 +54,7 @@ export default function ArticleSlider() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const visibleCount = 4;
+  const visibleCount = 3;
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -117,7 +117,7 @@ export default function ArticleSlider() {
           variant="ghost"
           mr={2}
         />
-        <Flex gap={4} flexWrap="nowrap" justify="center">
+        <Flex gap={6} flexWrap="nowrap" justify="center" w="100%">
           {visibleArticles.map((article) => (
             <Box
               key={article.id}
@@ -125,9 +125,9 @@ export default function ArticleSlider() {
               borderRadius="md"
               boxShadow="md"
               overflow="hidden"
-              minW="220px"
-              maxW="220px"
-              flex="0 0 auto"
+              minW="300px"
+              maxW="300px"
+              flex="1"
               as="a"
               href={article.sourceLink}
               target="_blank"
@@ -138,7 +138,7 @@ export default function ArticleSlider() {
                 src={article.image || DEFAULT_IMAGE}
                 alt={article.title}
                 width="100%"
-                height="140px"
+                height="200px"
                 objectFit="cover"
                 mb={4}
                 fallbackSrc={DEFAULT_IMAGE}
@@ -148,15 +148,15 @@ export default function ArticleSlider() {
                 }}
               />
               <Flex direction="column" px={4} mb={6}>
-                <Flex justify="space-between" align="center" mb={1}>
-                  <Text fontSize="sm" color="gray.500">
+                <Flex justify="space-between" align="center" mb={2}>
+                  <Text fontSize="sm" color="gray.500" fontWeight="medium">
                     {article.category}
                   </Text>
                   <Text fontSize="xs" color="gray.400">
                     {formatDate(article.publishedAt)}
                   </Text>
                 </Flex>
-                <Text fontWeight="semibold" noOfLines={2}>
+                <Text fontWeight="semibold" noOfLines={3} fontSize="md">
                   {article.title}
                 </Text>
               </Flex>

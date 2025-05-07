@@ -9,10 +9,36 @@ import {
   Stack,
   Button,
   Flex,
+  useToast,
 } from "@chakra-ui/react";
 import { SearchIcon } from "@chakra-ui/icons";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function NewsSearch() {
+  const [keyword, setKeyword] = useState("");
+  const router = useRouter();
+  const toast = useToast();
+
+  const handleSearch = () => {
+    if (!keyword.trim()) {
+      toast({
+        title: "검색어를 입력해주세요",
+        status: "warning",
+        duration: 2000,
+        isClosable: true,
+      });
+      return;
+    }
+    router.push(`/search?keyword=${encodeURIComponent(keyword.trim())}`);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   return (
     <Box maxW="1000px" mx="auto" bg="purple.50" borderRadius="md" p={8}>
       <Text mb={6} fontWeight="semibold" fontSize="2xl" textAlign="center">
@@ -33,19 +59,26 @@ export default function NewsSearch() {
             bg="white"
             w="600px"
             borderRadius="md"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onKeyPress={handleKeyPress}
           />
         </InputGroup>
       </Flex>
 
       {/* 카테고리 버튼 */}
       <Stack direction="row" spacing={4} justify="center">
-        {["IT", "경제", "사회", "문화", "국제", "스포츠"].map((cat) => (
+        {["IT", "World", "Politics", "Business", "Health", "Travel"].map((cat) => (
           <Button
             key={cat}
             variant="outline"
             size="sm"
             colorScheme="purple"
             bg="white"
+            onClick={() => {
+              setKeyword(cat);
+              handleSearch();
+            }}
           >
             {cat}
           </Button>

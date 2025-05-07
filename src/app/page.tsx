@@ -1,18 +1,24 @@
 "use client";
 
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-
-import {
-  Box,
-} from "@chakra-ui/react";
-
-
-import ArticleSlider from "../components/Articleslider";
-import NewsSearch from "../components/NewsSearch";
-import Scrapnews from "../components/Scrapnews"
+import { Box } from "@chakra-ui/react";
+import { useState, useEffect } from "react";
+import Header from "@/src/components/Header";
+import NewsSearch from "@/src/components/NewsSearch";
+import ArticleSlider from "@/src/components/Articleslider";
+import CategoryNews from "@/src/components/CategoryNews";
+import Footer from "@/src/components/Footer";
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <>
       <Header />
@@ -21,7 +27,7 @@ export default function Home() {
         <Box mt={20}>
           <NewsSearch />
         </Box>
-        <Scrapnews />
+        <CategoryNews />
       </Box>
       <Footer />
     </>
