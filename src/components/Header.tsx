@@ -121,12 +121,14 @@ export default function Header() {
         left="50%"
         transform="translate(-50%, -50%)"
       >
-        <TabList>
-          <Tab>Home</Tab>
-          <Tab>나의 학습내역</Tab>
-          <Tab>뉴스 검색</Tab>
-        </TabList>
-      </Tabs>
+        <Tabs>
+          <TabList>
+            <Tab>Home</Tab>
+            <Tab>나의 학습내역</Tab>
+            <Tab>뉴스 검색</Tab>
+          </TabList>
+        </Tabs>
+      </Box>
     </Box>
   );
 }
