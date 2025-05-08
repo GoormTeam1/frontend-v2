@@ -94,6 +94,104 @@ export default function SearchPage() {
     setCurrentPage(0); // 정렬 변경 시 첫 페이지로 이동
   };
 
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxVisiblePages = 5;
+    const halfVisiblePages = Math.floor(maxVisiblePages / 2);
+
+    let startPage = Math.max(0, currentPage - halfVisiblePages);
+    let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 1);
+
+    // 시작 페이지 조정
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(0, endPage - maxVisiblePages + 1);
+    }
+
+    // 이전 페이지 버튼
+    buttons.push(
+      <Button
+        key="prev"
+        onClick={() => handlePageChange(currentPage - 1)}
+        isDisabled={currentPage === 0}
+        variant="outline"
+        colorScheme="purple"
+      >
+        이전
+      </Button>
+    );
+
+    // 첫 페이지로 이동 버튼 (필요한 경우)
+    if (startPage > 0) {
+      buttons.push(
+        <Button
+          key="first"
+          onClick={() => handlePageChange(0)}
+          variant="outline"
+          colorScheme="purple"
+        >
+          1
+        </Button>
+      );
+      if (startPage > 1) {
+        buttons.push(
+          <Text key="first-ellipsis" mx={2}>
+            ...
+          </Text>
+        );
+      }
+    }
+
+    // 페이지 번호 버튼들
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <Button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          colorScheme={currentPage === i ? "purple" : "gray"}
+          variant={currentPage === i ? "solid" : "outline"}
+        >
+          {i + 1}
+        </Button>
+      );
+    }
+
+    // 마지막 페이지로 이동 버튼 (필요한 경우)
+    if (endPage < totalPages - 1) {
+      if (endPage < totalPages - 2) {
+        buttons.push(
+          <Text key="last-ellipsis" mx={2}>
+            ...
+          </Text>
+        );
+      }
+      buttons.push(
+        <Button
+          key="last"
+          onClick={() => handlePageChange(totalPages - 1)}
+          variant="outline"
+          colorScheme="purple"
+        >
+          {totalPages}
+        </Button>
+      );
+    }
+
+    // 다음 페이지 버튼
+    buttons.push(
+      <Button
+        key="next"
+        onClick={() => handlePageChange(currentPage + 1)}
+        isDisabled={currentPage === totalPages - 1}
+        variant="outline"
+        colorScheme="purple"
+      >
+        다음
+      </Button>
+    );
+
+    return buttons;
+  };
+
   if (loading) {
     return (
       <>
@@ -180,32 +278,7 @@ export default function SearchPage() {
             {totalPages > 1 && (
               <Flex justify="center" mt={8}>
                 <ButtonGroup spacing={2}>
-                  <Button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    isDisabled={currentPage === 0}
-                    variant="outline"
-                    colorScheme="purple"
-                  >
-                    이전
-                  </Button>
-                  {[...Array(totalPages)].map((_, index) => (
-                    <Button
-                      key={index}
-                      onClick={() => handlePageChange(index)}
-                      colorScheme={currentPage === index ? "purple" : "gray"}
-                      variant={currentPage === index ? "solid" : "outline"}
-                    >
-                      {index + 1}
-                    </Button>
-                  ))}
-                  <Button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    isDisabled={currentPage === totalPages - 1}
-                    variant="outline"
-                    colorScheme="purple"
-                  >
-                    다음
-                  </Button>
+                  {renderPaginationButtons()}
                 </ButtonGroup>
               </Flex>
             )}
