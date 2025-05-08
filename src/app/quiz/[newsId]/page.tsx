@@ -1,10 +1,13 @@
 // app/quiz/[newsId]/page.tsx
+
 import QuizPageClient from "./QuizPageClient";
 
 interface PageProps {
   params: { newsId: string };
 }
 
-export default function Page({ params }: PageProps) {
-  return <QuizPageClient newsId={params.newsId} />;
+// ✅ async 함수로 수정
+export default async function Page({ params }: PageProps) {
+  const { newsId } = params;
+  return <QuizPageClient newsId={newsId} />;
 }
