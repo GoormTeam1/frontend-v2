@@ -54,6 +54,28 @@ export default function Header() {
     router.push("/");
   };
 
+
+  const handleTabChange = (index: number) => {
+    switch (index) {
+      case 0:
+        router.push("/");
+        break;
+      case 1:
+        router.push("/mypage");
+        break;
+      case 2:
+        router.push("/search?keyword=it");
+        break;
+    }
+  };
+
+  const getTabIndex = () => {
+    if (pathname === "/") return 0;
+    if (pathname === "/mypage") return 1;
+    if (pathname === "/search") return 2;
+    return 0;
+  };
+  
   return (
     <Box
       as="header"
@@ -74,7 +96,14 @@ export default function Header() {
             </Text>
           )}
         </Box>
-
+        {/* 가운데: 팀명 */}
+        <Box flex="1" textAlign="center">
+          <Link href="/">
+            <Heading size="xl" cursor="pointer">
+              NeWordS
+            </Heading>
+          </Link>
+        </Box>
         {/* 오른쪽: 로그인 상태 */}
         <Box>
           {user ? (
@@ -114,21 +143,24 @@ export default function Header() {
         </Box>
       </Flex>
 
-      {/* 가운데: 팀명 */}
-      <Box
-        position="absolute"
-        top="50%"
-        left="50%"
-        transform="translate(-50%, -50%)"
-      >
-        <Tabs>
-          <TabList>
-            <Tab>Home</Tab>
-            <Tab>나의 학습내역</Tab>
-            <Tab>뉴스 검색</Tab>
-          </TabList>
-        </Tabs>
-      </Box>
+
+      {/* 네비게이션 탭 */}
+      <Tabs
+        index={getTabIndex()}
+        onChange={handleTabChange}
+        variant="enclosed"
+        colorScheme="purple"
+        align="center"
+        mt={4}
+        mb={0.4}
+      > 
+        <TabList>
+          <Tab>Home</Tab>
+          <Tab>나의 학습내역</Tab>
+          <Tab>뉴스 검색</Tab>
+        </TabList>
+      </Tabs>
+      
     </Box>
   );
 }
