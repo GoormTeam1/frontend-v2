@@ -15,7 +15,8 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import Footer from "../../components/Footer"; // 경로 주의
+import Footer from "../../components/Footer";
+import { API_BASE_URL } from '@/config/env';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,16 +29,21 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      const response = await axios.post("http://172.16.24.156:8081/api/user/login", {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/api/user/login`,
+        { email, password }
+      );
 
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
+      // 🔑 accessToken 꺼내기
+      const accessToken = response.data.data?.accessToken;
+      console.log("로그인 응답 토큰:", accessToken);
+
+      if (accessToken) {
+        localStorage.setItem("token", accessToken);
+        router.push("/");
+      } else {
+        throw new Error("로그인 응답에 accessToken이 없습니다.");
       }
-
-      router.push("/");
     } catch (error: any) {
       const message =
         error.response?.data?.message || "이메일 또는 비밀번호가 올바르지 않습니다.";

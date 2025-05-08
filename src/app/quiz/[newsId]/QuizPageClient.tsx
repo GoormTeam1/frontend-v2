@@ -13,57 +13,75 @@ import {
 } from "@chakra-ui/react";
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+import { API_BASE_URL } from '@/config/env';
+
 
 interface QuizPageClientProps {
   newsId: string;
 }
 
 interface QuizData {
-  id: number;
-  title: string;
-  question: string;
-  translated: string;
-  correctAnswer: string;
-  options: string[];
+  newsId: number | null;
+  sentenceIndex: number;
+  sentenceText: string;
+  translateText: string;
+  blankText: string;
+  blankWord: string;
 }
-
-const mockQuiz: QuizData = {
-  id: 99999999,
-  title: "Washington State Lawmakers Vote to Limit Rent Increases",
-  translated:
-    "워싱턴 주 의원들은 연간 주거용 임대료 인상을 최대 10%로 제한하는 법안을 통과시켜...",
-  question:
-    "Washington State lawmakers passed a bill to cap annual residential rent increases at no more than 10 percent, making it the third state to adopt statewide rent ____.",
-  correctAnswer: "control",
-  options: ["control", "regulation", "management", "restriction"],
-};
 
 export default function QuizPageClient({ newsId }: QuizPageClientProps) {
   const newsIdNumber = parseInt(newsId, 10);
   const toast = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const [quiz, setQuiz] = useState<QuizData | null>(null);
+  const router = useRouter();
+  const [quizList, setQuizList] = useState<QuizData[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [wrongCount, setWrongCount] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [canRevealAnswer, setCanRevealAnswer] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchQuiz = async () => {
+  const quiz = quizList[currentIndex];
+
+  const handlePrevQuiz = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setAnswer("");
+      setWrongCount(0);
+      setShowAnswer(false);
+      setCanRevealAnswer(false);
+    }
+  };
+
+  const fetchQuizList = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`http://localhost:8082/api/quiz/${newsIdNumber}`);
-      setQuiz(res.data);
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API_BASE_URL}/api/quiz/${newsIdNumber}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      setQuizList(res.data.sort((a: QuizData, b: QuizData) => a.sentenceIndex - b.sentenceIndex));
+      setCurrentIndex(0);
     } catch (err) {
-      console.warn("퀴즈 API 호출 실패, mock 데이터 사용");
-      if (newsIdNumber === 99999999) setQuiz(mockQuiz);
+      console.warn("퀴즈 API 호출 실패:", err);
+      toast({
+        title: "퀴즈 데이터를 불러오는 데 실패했습니다.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   useEffect(() => {
-    fetchQuiz();
+    fetchQuizList();
   }, [newsId]);
 
   useEffect(() => {
@@ -91,7 +109,7 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
   const handleSubmit = () => {
     if (!quiz) return;
     const trimmedAnswer = answer.trim().toLowerCase();
-    const correct = quiz.correctAnswer.toLowerCase();
+    const correct = quiz.blankWord.toLowerCase();
     const isRight = trimmedAnswer === correct;
 
     if (isRight) {
@@ -102,13 +120,15 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
       setWrongCount(newWrongCount);
 
       toast({
-        title: newWrongCount >= 2 ? "오답입니다." : "오답입니다. 다시 시도해보세요.",
+        title: "오답입니다. 다시 시도해보세요.",
         status: "error",
         duration: 2000,
         isClosable: true,
       });
 
-      if (newWrongCount >= 2) setShowAnswer(true);
+      if (newWrongCount >= 2) {
+        setCanRevealAnswer(true); // 자동 정답 공개는 하지 않음
+      }
     }
   };
 
@@ -116,7 +136,18 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
     setAnswer("");
     setWrongCount(0);
     setShowAnswer(false);
-    fetchQuiz();
+    setCanRevealAnswer(false);
+
+    if (currentIndex < quizList.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      toast({
+        title: "모든 문제를 완료했습니다!",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
   if (isLoading) {
@@ -147,11 +178,14 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
     <Box minH="100vh" display="flex" flexDirection="column">
       <Header />
       <Box maxW="4xl" mx="auto" px={4} py={20} flex="1">
+        <Heading size="lg" mb={6}>
+          문장 {quiz.sentenceIndex + 1} / {quizList.length}
+        </Heading>
         <Text fontSize="2xl" fontWeight="semibold" mb={6}>
-          {quiz.question}
+          {quiz.blankText}
         </Text>
         <Text fontSize="xl" color="gray.600" mb={12}>
-          {quiz.translated}
+          {quiz.translateText}
         </Text>
 
         <form
@@ -171,26 +205,75 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
             fontSize="lg"
           />
           <Flex justify="center">
-            <Button type="submit" colorScheme="purple" isDisabled={showAnswer} mb={6} size="lg" px={8}>
+            <Button
+              type="submit"
+              colorScheme="purple"
+              isDisabled={showAnswer}
+              mb={6}
+              size="lg"
+              px={8}
+            >
               제출
             </Button>
           </Flex>
         </form>
 
+        {/* 정답 보기 버튼 */}
+        {canRevealAnswer && !showAnswer && (
+          <Flex justify="center" mt={4}>
+            <Button
+              onClick={() => setShowAnswer(true)}
+              colorScheme="gray"
+              variant="outline"
+              size="md"
+            >
+              정답 보기
+            </Button>
+          </Flex>
+        )}
+
+        {/* 정답 표시 + 다음 문제 */}
         {showAnswer && (
           <Box mt={8} p={6} bg="gray.50" borderRadius="md">
             <Text fontSize="lg" fontWeight="bold" color="green.500" mb={6}>
-              정답: {quiz.correctAnswer}
+              정답: {quiz.blankWord}
             </Text>
-            <Flex justify="center">
-              <Button onClick={handleNextQuiz} colorScheme="purple" variant="outline" size="lg" px={8}>
-                다음 문제
-              </Button>
+            <Flex justify="center" gap={4}>
+              {currentIndex > 0 && (
+                <Button
+                  onClick={handlePrevQuiz}
+                  colorScheme="gray"
+                  variant="outline"
+                  size="lg"
+                  px={8}
+                >
+                  이전 문제
+                </Button>
+              )}
+              {currentIndex < quizList.length - 1 ? (
+                <Button
+                  onClick={handleNextQuiz}
+                  colorScheme="purple"
+                  variant="outline"
+                  size="lg"
+                  px={8}
+                >
+                  다음 문제
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => router.push("/")}
+                  colorScheme="green"
+                  size="lg"
+                  px={8}
+                >
+                  홈으로 돌아가기
+                </Button>
+              )}
             </Flex>
           </Box>
         )}
       </Box>
-      <Footer />
     </Box>
   );
 }
