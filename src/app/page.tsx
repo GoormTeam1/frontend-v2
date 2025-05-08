@@ -2,11 +2,11 @@
 
 import { Box } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import Header from "@/src/components/Header";
-import NewsSearch from "@/src/components/NewsSearch";
-import ArticleSlider from "@/src/components/Articleslider";
-import CategoryNews from "@/src/components/CategoryNews";
-import Footer from "@/src/components/Footer";
+import Header from "@/components/Header";
+import NewsSearch from "@/components/NewsSearch";
+import ArticleSlider from "@/components/Articleslider";
+import CategoryNews from "@/components/CategoryNews";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);

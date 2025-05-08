@@ -16,8 +16,9 @@ import {
 } from "@chakra-ui/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import Header from "@/src/components/Header";
-import NewsSearch from "@/src/components/NewsSearch";
+import Header from "@/components/Header";
+import NewsSearch from "@/components/NewsSearch";
+import { API_BASE_URL } from '@/config/env';
 
 interface NewsArticle {
   id: number;
@@ -59,7 +60,7 @@ export default function SearchPage() {
       try {
         setLoading(true);
         const response = await fetch(
-          `http://172.16.24.156:8082/api/news/search?keyword=${encodeURIComponent(keyword)}&page=${currentPage}&size=9&sort=publishedAt,${sortOrder === "latest" ? "desc" : "asc"}`
+          `${API_BASE_URL}/api/news/search?keyword=${encodeURIComponent(keyword)}&page=${currentPage}&size=9&sort=publishedAt,${sortOrder === "latest" ? "desc" : "asc"}`
         );
         
         if (!response.ok) {

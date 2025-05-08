@@ -16,6 +16,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Footer from "../../components/Footer";
+import { API_BASE_URL } from '@/config/env';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,7 +30,7 @@ export default function LoginPage() {
 
     try {
       const response = await axios.post(
-        "http://172.16.24.156:8081/api/user/login",
+        `${API_BASE_URL}/api/user/login`,
         { email, password }
       );
 

@@ -14,6 +14,7 @@ import {
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from '@/config/env';
 
 
 interface QuizPageClientProps {
@@ -57,16 +58,28 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
   const fetchQuizList = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`http://172.16.24.156:8083/api/quiz/${newsIdNumber}`);
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API_BASE_URL}/api/quiz/${newsIdNumber}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
       setQuizList(res.data.sort((a: QuizData, b: QuizData) => a.sentenceIndex - b.sentenceIndex));
       setCurrentIndex(0);
     } catch (err) {
-      console.warn("퀴즈 API 호출 실패");
+      console.warn("퀴즈 API 호출 실패:", err);
+      toast({
+        title: "퀴즈 데이터를 불러오는 데 실패했습니다.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   useEffect(() => {
     fetchQuizList();
   }, [newsId]);

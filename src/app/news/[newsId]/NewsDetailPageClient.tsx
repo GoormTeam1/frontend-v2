@@ -17,6 +17,7 @@ import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import Link from "next/link";
 import axios from "axios";
+import { API_BASE_URL } from '@/config/env';
 
 interface NewsDetailPageClientProps {
   newsId: string;
@@ -28,7 +29,7 @@ interface NewsData {
   fullText: string;
   summary: string;
   source?: string;
-  imageLink: string;
+  image: string;
   category: string;
   publishedAt: string;
   createdAt: string;
@@ -40,7 +41,7 @@ const mockNewsData: NewsData = {
   fullText: "...",
   summary: "...",
   source: "https://example.com/ai-news",
-  imageLink: "https://images.unsplash.com/photo-1677442136019-21780ecad995",
+  image: "https://images.unsplash.com/photo-1677442136019-21780ecad995",
   category: "기술",
   publishedAt: "2024-05-02T16:30:00Z",
   createdAt: "2024-05-02T16:30:00Z",
@@ -62,7 +63,7 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const res = await axios.get(`http://172.16.24.156:8082/api/news/${newsIdNumber}`);
+        const res = await axios.get(`${API_BASE_URL}/api/news/${newsIdNumber}`);
         setData(res.data);
       } catch (err) {
         if (newsIdNumber === 99999999) {
@@ -89,11 +90,11 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
 
     try {
       if (isScrapped) {
-        await axios.delete(`http://localhost:8081/api/scrabs/${newsIdNumber}`, { headers });
+        await axios.delete(`${API_BASE_URL}/api/scrabs/${newsIdNumber}`, { headers });
         setIsScrapped(false);
         toast({ title: "스크랩 취소됨", status: "info", duration: 2000 });
       } else {
-        await axios.post(`http://localhost:8081/api/scrabs/${newsIdNumber}`, {}, { headers });
+        await axios.post(`${API_BASE_URL}/api/scrabs/${newsIdNumber}`, {}, { headers });
         setIsScrapped(true);
         toast({ title: "스크랩 완료", status: "success", duration: 2000 });
       }
@@ -144,7 +145,7 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
               </ChakraLink>
             )}
           </Flex>
-          <Image src={data.imageLink} alt={data.title} borderRadius="md" shadow="md" />
+          <Image src={data.image} alt={data.title} borderRadius="md" shadow="md" />
           <Text whiteSpace="pre-line" color="gray.800" fontSize="md">{data.fullText}</Text>
           <Flex justify="center">
             <Link href={`/quiz/${data.id}`} passHref>

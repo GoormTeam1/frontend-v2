@@ -20,6 +20,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Footer from "../../components/Footer";
+import { API_BASE_URL } from '@/config/env';
 
 // 백엔드 Category Enum과 동일한 대소문자 값
 const categoryOptions = [
@@ -132,7 +133,7 @@ export default function SignupPage() {
           categoryList: selectedCategories
         };
         console.log("✅ 회원가입 전송 payload:", JSON.stringify(payload, null, 2)); // 보기 좋게 출력
-        await axios.post("http://172.16.24.156:8081/api/user/signup", payload, {
+        await axios.post(`${API_BASE_URL}/api/user/signup`, payload, {
           headers: { "Content-Type": "application/json" },
         });
 

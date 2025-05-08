@@ -20,6 +20,7 @@ import {
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
+import { API_BASE_URL } from '@/config/env';
 
 interface NewsArticle {
   id: number;
@@ -90,7 +91,7 @@ export default function CategoryNews() {
       try {
         setLoading(true);
         const response = await fetch(
-          `http://172.16.24.156:8082/api/news/category/${selectedCategory}?page=${currentPage}&size=9&sort=publishedAt,${sortOrder === "latest" ? "desc" : "asc"}`
+          `${API_BASE_URL}/api/news/category/${selectedCategory}?page=${currentPage}&size=9&sort=publishedAt,${sortOrder === "latest" ? "desc" : "asc"}`
         );
         
         if (!response.ok) {

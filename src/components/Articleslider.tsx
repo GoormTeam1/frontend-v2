@@ -1,5 +1,4 @@
 "use client";
-
 import {
   Box,
   Flex,
@@ -9,6 +8,8 @@ import {
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
+import Link from "next/link";
+import { API_BASE_URL } from '@/config/env';
 
 interface NewsArticle {
   id: number;
@@ -59,7 +60,7 @@ export default function ArticleSlider() {
   useEffect(() => {
     const fetchArticles = async () => {
       try {
-        const response = await fetch('http://172.16.24.156:8082/api/news');
+        const response = await fetch(`${API_BASE_URL}/api/news`);
         if (!response.ok) {
           throw new Error('API 요청 실패');
         }
@@ -119,48 +120,46 @@ export default function ArticleSlider() {
         />
         <Flex gap={6} flexWrap="nowrap" justify="center" w="100%">
           {visibleArticles.map((article) => (
-            <Box
-              key={article.id}
-              bg="white"
-              borderRadius="md"
-              boxShadow="md"
-              overflow="hidden"
-              minW="300px"
-              maxW="300px"
-              flex="1"
-              as="a"
-              href={article.sourceLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              _hover={{ transform: 'translateY(-4px)', transition: 'transform 0.2s' }}
-            >
-              <Image
-                src={article.image || DEFAULT_IMAGE}
-                alt={article.title}
-                width="100%"
-                height="200px"
-                objectFit="cover"
-                mb={4}
-                fallbackSrc={DEFAULT_IMAGE}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = DEFAULT_IMAGE;
-                }}
-              />
-              <Flex direction="column" px={4} mb={6}>
-                <Flex justify="space-between" align="center" mb={2}>
-                  <Text fontSize="sm" color="gray.500" fontWeight="medium">
-                    {article.category}
-                  </Text>
-                  <Text fontSize="xs" color="gray.400">
-                    {formatDate(article.publishedAt)}
+            <Link key={article.id} href={`/news/${article.id}`} passHref>
+              <Box
+                bg="white"
+                borderRadius="md"
+                boxShadow="md"
+                overflow="hidden"
+                minW="300px"
+                maxW="300px"
+                flex="1"
+                cursor="pointer"
+                _hover={{ transform: 'translateY(-4px)', transition: 'transform 0.2s' }}
+              >
+                <Image
+                  src={article.image || DEFAULT_IMAGE}
+                  alt={article.title}
+                  width="100%"
+                  height="200px"
+                  objectFit="cover"
+                  mb={4}
+                  fallbackSrc={DEFAULT_IMAGE}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = DEFAULT_IMAGE;
+                  }}
+                />
+                <Flex direction="column" px={4} mb={6}>
+                  <Flex justify="space-between" align="center" mb={2}>
+                    <Text fontSize="sm" color="gray.500" fontWeight="medium">
+                      {article.category}
+                    </Text>
+                    <Text fontSize="xs" color="gray.400">
+                      {formatDate(article.publishedAt)}
+                    </Text>
+                  </Flex>
+                  <Text fontWeight="semibold" noOfLines={3} fontSize="md">
+                    {article.title}
                   </Text>
                 </Flex>
-                <Text fontWeight="semibold" noOfLines={3} fontSize="md">
-                  {article.title}
-                </Text>
-              </Flex>
-            </Box>
+              </Box>
+            </Link>
           ))}
         </Flex>
         <IconButton
