@@ -8,7 +8,7 @@ import { jwtDecode } from "jwt-decode";
 
 interface DecodedToken {
   sub: string;          // e.g. email or id
-  nickname?: string;    // 백엔드에서 claim 으로 넣어줬다면
+  username?: string;    // 백엔드에서 claim 으로 넣어줬다면
   exp: number;
 }
 
@@ -109,7 +109,7 @@ export default function Header() {
           {user ? (
             <Flex align="center">
               <Text fontSize="sm" mr={3}>
-                {user.nickname ?? user.sub}님 환영합니다!
+                {user.username ?? user.sub}님 환영합니다!
               </Text>
               <Button
                 size="sm"
