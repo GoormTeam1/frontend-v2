@@ -1,10 +1,11 @@
 "use client";
 
-import { Box, Container, Heading, useToast } from "@chakra-ui/react";
-import UserProfile from "../../components/UserProfile";
-import Header from "@/components/Header";
+import { Box, Container, Heading, useToast, Divider } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from '@/config/env';
+import Header from "@/components/Header";
+import UserProfile from "../../components/UserProfile";
+import ScrapedArticles from "@/components/ScrapedArticles"; // ← 추가
 
 type UserData = {
   name: string;
@@ -32,13 +33,11 @@ export default function MyPage() {
         });
 
         const contentType = response.headers.get("content-type");
-
         if (!contentType?.includes("application/json")) {
           throw new Error("서버가 JSON이 아닌 응답을 반환했습니다.");
         }
 
         const result = await response.json();
-
         if (!response.ok) {
           throw new Error(result.message || "회원 정보 조회 실패");
         }
@@ -49,8 +48,8 @@ export default function MyPage() {
           name: raw.userName,
           email: raw.email,
           gender: raw.gender,
-          birthDate: raw.birthDate.slice(0, 10), // YYYY-MM-DD
-          interests: raw.categoryList, // 서버 응답에 없으므로 일단 빈 배열
+          birthDate: raw.birthDate.slice(0, 10),
+          interests: raw.categoryList,
           englishLevel: raw.level as "상" | "중" | "하",
         });
       } catch (error: any) {
@@ -68,66 +67,63 @@ export default function MyPage() {
   }, []);
 
   const handleProfileUpdate = async (updatedData: UserData) => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) throw new Error("로그인 토큰이 없습니다.");
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("로그인 토큰이 없습니다.");
 
-    // 관심사 업데이트
-    const interestRes = await fetch(`${API_BASE_URL}/api/user/interests`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ categoryList: updatedData.interests }),
-    });
+      const interestRes = await fetch(`${API_BASE_URL}/api/user/interests`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ categoryList: updatedData.interests }),
+      });
 
-    if (!interestRes.ok) {
-      const errorData = await interestRes.json();
-      throw new Error(errorData.message || "관심사 업데이트 실패");
+      if (!interestRes.ok) {
+        const errorData = await interestRes.json();
+        throw new Error(errorData.message || "관심사 업데이트 실패");
+      }
+
+      const levelRes = await fetch(`${API_BASE_URL}/api/user/level`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ level: updatedData.englishLevel }),
+      });
+
+      if (!levelRes.ok) {
+        const errorData = await levelRes.json();
+        throw new Error(errorData.message || "레벨 업데이트 실패");
+      }
+
+      toast({
+        title: "업데이트 성공",
+        description: "회원 정보가 성공적으로 수정되었습니다.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+
+      setUserData(updatedData);
+    } catch (error: any) {
+      toast({
+        title: "업데이트 실패",
+        description: error.message || "프로필 업데이트 중 오류가 발생했습니다.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
-
-    // 난이도 업데이트
-    const levelRes = await fetch(`${API_BASE_URL}/api/user/level`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ level: updatedData.englishLevel }),
-    });
-
-    if (!levelRes.ok) {
-      const errorData = await levelRes.json();
-      throw new Error(errorData.message || "레벨 업데이트 실패");
-    }
-
-    toast({
-      title: "업데이트 성공",
-      description: "회원 정보가 성공적으로 수정되었습니다.",
-      status: "success",
-      duration: 5000,
-      isClosable: true,
-    });
-
-    setUserData(updatedData);
-  } catch (error: any) {
-    toast({
-      title: "업데이트 실패",
-      description: error.message || "프로필 업데이트 중 오류가 발생했습니다.",
-      status: "error",
-      duration: 5000,
-      isClosable: true,
-    });
-  }
-};
-
+  };
 
   return (
     <>
       <Header />
       <Container maxW="container.xl" py={8}>
-        <Box mb={8}>
+        <Box mb={12}>
           <Heading as="h1" size="lg" mb={6} pl={36}>
             마이페이지
           </Heading>
@@ -135,6 +131,11 @@ export default function MyPage() {
             <UserProfile {...userData} onUpdate={handleProfileUpdate} />
           )}
         </Box>
+
+        <Divider my={10} />
+        
+        {/* 🔽 스크랩한 기사 리스트 추가 */}
+        <ScrapedArticles />
       </Container>
     </>
   );

@@ -36,6 +36,7 @@ interface NewsData {
   category: string;
   publishedAt: string;
   createdAt: string;
+  scrabbed: boolean; // ✅ 서버에서 받아온 스크랩 상태
 }
 
 interface SummaryData {
@@ -59,8 +60,12 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/news/${newsIdNumber}`);
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+        const res = await axios.get(`${API_BASE_URL}/api/news/${newsIdNumber}`, { headers });
         setData(res.data);
+        setIsScrapped(res.data.scrabbed);
       } catch {
         toast({ title: "기사를 불러오지 못했습니다.", status: "error", duration: 3000 });
       }
@@ -89,10 +94,7 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
   const getSummaryText = () => {
     const matched = summaries.find((s) => s.level === summaryLevel);
     if (!matched?.summary) return "해당 수준의 요약이 없습니다.";
-    return matched.summary
-      .replace(/\d+\.\s*/g, "") // 번호 제거
-      .replace(/\n/g, " ")      // 줄바꿈 제거
-      .trim();
+    return matched.summary.replace(/\d+\.\s*/g, "").replace(/\n/g, " ").trim();
   };
 
   const handleScrap = async () => {
@@ -109,15 +111,28 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
         "Content-Type": "application/json",
       };
 
-      const body = {
-        userEmail: decoded.sub,
-        newsId: newsIdNumber,
-        status: isScrapped ? "읽기싫음" : "읽고싶음",
-      };
+      if (isScrapped) {
+        await axios.delete(`${API_BASE_URL}/api/scrabs`, {
+          headers,
+          params: {
+            userEmail: decoded.sub,
+            newsId: newsIdNumber,
+          },
+        });
+        toast({ title: "스크랩이 취소되었습니다", status: "info", duration: 2000 });
+      } else {
+        await axios.post(
+          `${API_BASE_URL}/api/scrabs`,
+          {
+            userEmail: decoded.sub,
+            newsId: newsIdNumber,
+            status: "읽고싶음",
+          },
+          { headers }
+        );
+      }
 
-      await axios.post(`${API_BASE_URL}/api/scrabs`, body, { headers });
       setIsScrapped(!isScrapped);
-
       toast({
         title: isScrapped ? "스크랩이 취소되었습니다" : "스크랩이 완료되었습니다",
         status: isScrapped ? "info" : "success",
