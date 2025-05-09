@@ -74,7 +74,7 @@ export default function MyPage() {
 
     // 관심사 업데이트
     const interestRes = await fetch(`${API_BASE_URL}/api/user/interests`, {
-      method: "PATCH",
+      method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
