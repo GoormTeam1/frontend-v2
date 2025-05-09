@@ -14,8 +14,7 @@ import {
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { API_BASE_URL } from '@/config/env';
-
+import { API_BASE_URL } from "@/config/env";
 
 interface QuizPageClientProps {
   newsId: string;
@@ -26,8 +25,12 @@ interface QuizData {
   sentenceIndex: number;
   sentenceText: string;
   translateText: string;
-  blankText: string;
   blankWord: string;
+}
+
+function maskBlank(sentence: string, word: string): string {
+  const regex = new RegExp(`\\b${word}\\b`, "i");
+  return sentence.replace(regex, "_____");
 }
 
 export default function QuizPageClient({ newsId }: QuizPageClientProps) {
@@ -64,7 +67,7 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
           Authorization: `Bearer ${token}`,
         },
       });
-  
+
       setQuizList(res.data.sort((a: QuizData, b: QuizData) => a.sentenceIndex - b.sentenceIndex));
       setCurrentIndex(0);
     } catch (err) {
@@ -79,7 +82,7 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
       setIsLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchQuizList();
   }, [newsId]);
@@ -179,10 +182,10 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
       <Header />
       <Box maxW="4xl" mx="auto" px={4} py={20} flex="1">
         <Heading size="lg" mb={6}>
-          문장 {quiz.sentenceIndex + 1} / {quizList.length}
+          문장 {quiz.sentenceIndex} / {quizList.length}
         </Heading>
         <Text fontSize="2xl" fontWeight="semibold" mb={6}>
-          {quiz.blankText}
+          {maskBlank(quiz.sentenceText, quiz.blankWord)}
         </Text>
         <Text fontSize="xl" color="gray.600" mb={12}>
           {quiz.translateText}
@@ -274,6 +277,7 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
           </Box>
         )}
       </Box>
+      <Footer />
     </Box>
   );
 }
