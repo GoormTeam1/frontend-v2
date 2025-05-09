@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL } from '@/config/env';
 import Header from "@/components/Header";
 import UserProfile from "../../components/UserProfile";
-import ScrapedArticles from "@/components/ScrapedArticles"; // ← 추가
+import ScrapedArticles from "@/components/ScrapedArticles"; 
+import WrongQuizArticles from "@/components/WrongQuizArticles"; 
 
 type UserData = {
   name: string;
@@ -134,8 +135,8 @@ export default function MyPage() {
 
         <Divider my={10} />
         
-        {/* 🔽 스크랩한 기사 리스트 추가 */}
         <ScrapedArticles />
+        <WrongQuizArticles />
       </Container>
     </>
   );
