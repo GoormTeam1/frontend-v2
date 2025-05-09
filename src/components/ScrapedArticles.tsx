@@ -1,82 +1,94 @@
-'use client';
+"use client";
 
 import {
   Box,
-  Grid,
-  Image,
   Text,
   Flex,
+  IconButton,
+  Image,
   Spinner,
   useToast,
-  Button,
-  ButtonGroup,
-  Badge,
 } from "@chakra-ui/react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import { useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
+import Link from "next/link";
+import { API_BASE_URL } from "@/config/env";
 
-interface ScrapedArticle {
+interface ScrapedItem {
+  userEmail: string;
+  newsId: number;
+  status: string;
+}
+
+interface NewsArticle {
   id: number;
   title: string;
-  summary: string;
-  category: string;
   image: string;
-  sourceLink: string;
+  category: string;
   publishedAt: string;
-  scrapedAt: string;
 }
 
-interface ScrapedArticlesResponse {
-  content: ScrapedArticle[];
-  totalPages: number;
-  totalElements: number;
-  last: boolean;
-  first: boolean;
-  number: number;
-  size: number;
-}
+const DEFAULT_IMAGE = "https://via.placeholder.com/400x200?text=No+Image";
 
-export default function ScrapedArticles() {
-  const [articles, setArticles] = useState<ScrapedArticle[]>([]);
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+};
+
+export default function ScrapedArticlesSlider() {
+  const [scraps, setScraps] = useState<ScrapedItem[]>([]);
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  const [startIdx, setStartIdx] = useState(0);
+  const visibleCount = 3;
   const toast = useToast();
 
   useEffect(() => {
-    const fetchScrapedArticles = async () => {
+    const fetchScrapData = async () => {
       try {
-        setLoading(true);
         const token = localStorage.getItem("token");
-        if (!token) {
-          toast({
-            title: "로그인이 필요합니다",
-            status: "warning",
-            duration: 3000,
-            isClosable: true,
-          });
-          return;
-        }
+        if (!token) throw new Error("토큰 없음");
 
-        const response = await fetch(
-          `http://172.16.24.156:8082/api/news/scraps?page=${currentPage}&size=6`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const decoded = jwtDecode<{ sub: string }>(token);
+        const email = decoded.sub;
 
-        if (!response.ok) {
-          throw new Error("스크랩한 기사를 불러오는데 실패했습니다.");
-        }
+        const res = await fetch(`${API_BASE_URL}/api/scrabs/${email}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        const data: ScrapedArticlesResponse = await response.json();
-        setArticles(data.content || []);
-        setTotalPages(data.totalPages);
-      } catch (error) {
+        if (!res.ok) throw new Error("스크랩 목록 불러오기 실패");
+
+        const data = await res.json();
+        setScraps(data.content || []);
+      } catch (err: any) {
         toast({
-          title: "스크랩한 기사 불러오기 실패",
-          description: "잠시 후 다시 시도해주세요.",
+          title: "스크랩 데이터 오류",
+          description: err.message || "스크랩 목록을 불러오지 못했습니다.",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
+        setLoading(false);
+      }
+    };
+
+    fetchScrapData();
+  }, []);
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        const results = await Promise.all(
+          scraps.map((item) =>
+            fetch(`${API_BASE_URL}/api/news/${item.newsId}`).then((res) => res.json())
+          )
+        );
+        setArticles(results);
+      } catch {
+        toast({
+          title: "기사 정보 오류",
+          description: "기사 데이터를 불러오지 못했습니다.",
           status: "error",
           duration: 3000,
           isClosable: true,
@@ -86,52 +98,13 @@ export default function ScrapedArticles() {
       }
     };
 
-    fetchScrapedArticles();
-  }, [currentPage, toast]);
+    if (scraps.length > 0) fetchArticles();
+    else setLoading(false);
+  }, [scraps]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleUnscrap = async (articleId: number) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const response = await fetch(
-        `http://172.16.24.156:8082/api/news/scraps/${articleId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("스크랩 취소에 실패했습니다.");
-      }
-
-      // 스크랩 취소 후 목록 새로고침
-      setArticles(articles.filter(article => article.id !== articleId));
-      
-      toast({
-        title: "스크랩이 취소되었습니다",
-        status: "success",
-        duration: 2000,
-        isClosable: true,
-      });
-    } catch (error) {
-      toast({
-        title: "스크랩 취소 실패",
-        description: "잠시 후 다시 시도해주세요.",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
+  const handlePrev = () => setStartIdx((prev) => Math.max(prev - 1, 0));
+  const handleNext = () => setStartIdx((prev) => Math.min(prev + 1, articles.length - visibleCount));
+  const visibleArticles = articles.slice(startIdx, startIdx + visibleCount);
 
   if (loading) {
     return (
@@ -141,104 +114,72 @@ export default function ScrapedArticles() {
     );
   }
 
+  if (articles.length === 0) {
+    return (
+      <Box textAlign="center" py={12}>
+        <Text color="gray.500">스크랩한 기사가 없습니다.</Text>
+      </Box>
+    );
+  }
+
   return (
     <Box>
-      <Text fontSize="2xl" fontWeight="bold" mb={6}>
+      <Text fontSize="2xl" fontWeight="bold" mb={6} pl={36}>
         스크랩한 기사
       </Text>
-
-      {articles.length === 0 ? (
-        <Box textAlign="center" py={12} bg="gray.50" borderRadius="md">
-          <Text fontSize="lg" color="gray.500">
-            아직 스크랩한 기사가 없습니다.
-          </Text>
-        </Box>
-      ) : (
-        <>
-          <Grid templateColumns="repeat(3, 1fr)" gap={6} mb={8}>
-            {articles.map((article) => (
+      <Flex align="center" justify="center">
+        <IconButton
+          aria-label="이전"
+          icon={<ChevronLeftIcon boxSize={6} />}
+          onClick={handlePrev}
+          isDisabled={startIdx === 0}
+          variant="ghost"
+          mr={2}
+        />
+        <Flex gap={6}>
+          {visibleArticles.map((article) => (
+            <Link key={article.id} href={`/news/${article.id}`} passHref>
               <Box
-                key={article.id}
                 bg="white"
                 borderRadius="md"
-                overflow="hidden"
                 boxShadow="md"
-                position="relative"
+                overflow="hidden"
+                minW="300px"
+                maxW="300px"
+                flex="1"
+                cursor="pointer"
+                _hover={{ transform: "translateY(-4px)", transition: "transform 0.2s" }}
               >
                 <Image
-                  src={article.image}
+                  src={article.image || DEFAULT_IMAGE}
                   alt={article.title}
                   width="100%"
                   height="200px"
                   objectFit="cover"
+                  fallbackSrc={DEFAULT_IMAGE}
                 />
-                <Box p={4}>
-                  <Flex justify="space-between" mb={2}>
-                    <Badge colorScheme="purple">{article.category}</Badge>
-                    <Text fontSize="xs" color="gray.400">
-                      {new Date(article.publishedAt).toLocaleDateString()}
-                    </Text>
+                <Box px={4} py={3}>
+                  <Flex justify="space-between" mb={1}>
+                    <Text fontSize="sm" color="gray.500">{article.category}</Text>
+                    <Text fontSize="xs" color="gray.400">{formatDate(article.publishedAt)}</Text>
                   </Flex>
-                  <Text
-                    fontWeight="semibold"
-                    noOfLines={3}
-                    mb={2}
-                    as="a"
-                    href={article.sourceLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    _hover={{ color: "purple.500" }}
-                  >
+                  <Text fontWeight="semibold" noOfLines={3}>
                     {article.title}
                   </Text>
-                  <Button
-                    size="sm"
-                    colorScheme="purple"
-                    variant="outline"
-                    width="100%"
-                    onClick={() => handleUnscrap(article.id)}
-                  >
-                    스크랩 취소
-                  </Button>
                 </Box>
               </Box>
-            ))}
-          </Grid>
-
-          {totalPages > 1 && (
-            <Flex justify="center" mt={8}>
-              <ButtonGroup spacing={2}>
-                <Button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  isDisabled={currentPage === 0}
-                  variant="outline"
-                  colorScheme="purple"
-                >
-                  이전
-                </Button>
-                {[...Array(totalPages)].map((_, index) => (
-                  <Button
-                    key={index}
-                    onClick={() => handlePageChange(index)}
-                    colorScheme={currentPage === index ? "purple" : "gray"}
-                    variant={currentPage === index ? "solid" : "outline"}
-                  >
-                    {index + 1}
-                  </Button>
-                ))}
-                <Button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  isDisabled={currentPage === totalPages - 1}
-                  variant="outline"
-                  colorScheme="purple"
-                >
-                  다음
-                </Button>
-              </ButtonGroup>
-            </Flex>
-          )}
-        </>
-      )}
+            </Link>
+          ))}
+        </Flex>
+        <IconButton
+          aria-label="다음"
+          icon={<ChevronRightIcon boxSize={6} />}
+          onClick={handleNext}
+          isDisabled={startIdx >= articles.length - visibleCount}
+          variant="ghost"
+          ml={2}
+        />
+      </Flex>
     </Box>
   );
-} 
+}
