@@ -12,9 +12,9 @@ interface UserProfileProps {
 }
 
 const INTEREST_OPTIONS = [
-  "경제", "문화", "과학", "세계", "정치", "건강", 
-  "기후", "날씨", "여행", "스타일", "스포츠", "미국"
+  "US", "World", "Pollitics", "Business", "Heallth", "Entertainment", "Style", "Travel", "Sports", "Science", "Climate", "Weather"
 ];
+
 
 const UserProfile = ({
   name: initialName,

@@ -50,7 +50,7 @@ export default function MyPage() {
           email: raw.email,
           gender: raw.gender,
           birthDate: raw.birthDate.slice(0, 10), // YYYY-MM-DD
-          interests: [], // 서버 응답에 없으므로 일단 빈 배열
+          interests: raw.categoryList, // 서버 응답에 없으므로 일단 빈 배열
           englishLevel: raw.level as "상" | "중" | "하",
         });
       } catch (error: any) {
@@ -67,10 +67,61 @@ export default function MyPage() {
     fetchUserData();
   }, []);
 
-  const handleProfileUpdate = (updatedData: UserData) => {
-    // TODO: API 호출로 실제 데이터 업데이트
+  const handleProfileUpdate = async (updatedData: UserData) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("로그인 토큰이 없습니다.");
+
+    // 관심사 업데이트
+    const interestRes = await fetch(`${API_BASE_URL}/api/user/interests`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ categoryList: updatedData.interests }),
+    });
+
+    if (!interestRes.ok) {
+      const errorData = await interestRes.json();
+      throw new Error(errorData.message || "관심사 업데이트 실패");
+    }
+
+    // 난이도 업데이트
+    const levelRes = await fetch(`${API_BASE_URL}/api/user/level`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ level: updatedData.englishLevel }),
+    });
+
+    if (!levelRes.ok) {
+      const errorData = await levelRes.json();
+      throw new Error(errorData.message || "레벨 업데이트 실패");
+    }
+
+    toast({
+      title: "업데이트 성공",
+      description: "회원 정보가 성공적으로 수정되었습니다.",
+      status: "success",
+      duration: 5000,
+      isClosable: true,
+    });
+
     setUserData(updatedData);
-  };
+  } catch (error: any) {
+    toast({
+      title: "업데이트 실패",
+      description: error.message || "프로필 업데이트 중 오류가 발생했습니다.",
+      status: "error",
+      duration: 5000,
+      isClosable: true,
+    });
+  }
+};
+
 
   return (
     <>
