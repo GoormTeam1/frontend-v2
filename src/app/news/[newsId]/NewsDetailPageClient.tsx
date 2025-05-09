@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -12,12 +11,17 @@ import {
   Image,
   Link as ChakraLink,
   Container,
+  ButtonGroup,
+  IconButton,
 } from "@chakra-ui/react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import Link from "next/link";
 import axios from "axios";
-import { API_BASE_URL } from '@/config/env';
+import { API_BASE_URL } from "@/config/env";
+import { FaRegBookmark, FaBookmark } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 
 interface NewsDetailPageClientProps {
   newsId: string;
@@ -27,57 +31,69 @@ interface NewsData {
   id: number;
   title: string;
   fullText: string;
-  summary: string;
-  source?: string;
+  sourceLink?: string;
   image: string;
   category: string;
   publishedAt: string;
   createdAt: string;
 }
 
-const mockNewsData: NewsData = {
-  id: 99999999,
-  title: "인공지능 기술의 혁신적 발전, 새로운 시대를 열다",
-  fullText: "...",
-  summary: "...",
-  source: "https://example.com/ai-news",
-  image: "https://images.unsplash.com/photo-1677442136019-21780ecad995",
-  category: "기술",
-  publishedAt: "2024-05-02T16:30:00Z",
-  createdAt: "2024-05-02T16:30:00Z",
-};
+interface SummaryData {
+  id: number;
+  newsId: number;
+  level: "상" | "중" | "하";
+  summary: string;
+}
 
 export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientProps) {
   const newsIdNumber = parseInt(newsId, 10);
   const [data, setData] = useState<NewsData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [summaries, setSummaries] = useState<SummaryData[]>([]);
+  const [summaryLevel, setSummaryLevel] = useState<"상" | "중" | "하">("상");
   const [isScrapped, setIsScrapped] = useState(false);
   const [mounted, setMounted] = useState(false);
   const toast = useToast();
 
-  useEffect(() => {
-    setMounted(true); // ✅ 클라이언트에서만 렌더링 활성화
-  }, []);
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     const fetchNews = async () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/api/news/${newsIdNumber}`);
         setData(res.data);
-      } catch (err) {
-        if (newsIdNumber === 99999999) {
-          setData(mockNewsData);
-        } else {
-          setError("기사를 불러오지 못했습니다.");
+      } catch {
+        toast({ title: "기사를 불러오지 못했습니다.", status: "error", duration: 3000 });
+      }
+    };
+
+    const fetchSummaries = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          toast({ title: "로그인이 필요합니다.", status: "warning", duration: 3000 });
+          return;
         }
-      } finally {
-        setIsLoading(false);
+
+        const headers = { Authorization: `Bearer ${token}` };
+        const res = await axios.get(`${API_BASE_URL}/api/summary/${newsIdNumber}`, { headers });
+        setSummaries(res.data);
+      } catch {
+        toast({ title: "요약 데이터를 불러오지 못했습니다.", status: "error", duration: 3000 });
       }
     };
 
     fetchNews();
-  }, [newsIdNumber]);
+    fetchSummaries();
+  }, [newsIdNumber, toast]);
+
+  const getSummaryText = () => {
+    const matched = summaries.find((s) => s.level === summaryLevel);
+    if (!matched?.summary) return "해당 수준의 요약이 없습니다.";
+    return matched.summary
+      .replace(/\d+\.\s*/g, "") // 번호 제거
+      .replace(/\n/g, " ")      // 줄바꿈 제거
+      .trim();                  // 양쪽 공백 제거
+  };
 
   const handleScrap = async () => {
     const token = localStorage.getItem("token");
@@ -86,70 +102,86 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
       return;
     }
 
-    const headers = { Authorization: `Bearer ${token}` };
-
     try {
-      if (isScrapped) {
-        await axios.delete(`${API_BASE_URL}/api/scrabs/${newsIdNumber}`, { headers });
-        setIsScrapped(false);
-        toast({ title: "스크랩 취소됨", status: "info", duration: 2000 });
-      } else {
-        await axios.post(`${API_BASE_URL}/api/scrabs/${newsIdNumber}`, {}, { headers });
-        setIsScrapped(true);
-        toast({ title: "스크랩 완료", status: "success", duration: 2000 });
-      }
+      const decoded = jwtDecode<{ sub: string }>(token);
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
+      const body = {
+        userEmail: decoded.sub,
+        newsId: newsIdNumber,
+        status: isScrapped ? "읽기싫음" : "읽고싶음",
+      };
+
+      await axios.post(`${API_BASE_URL}/api/scrabs`, body, { headers });
+      setIsScrapped(!isScrapped);
+
+      toast({
+        title: isScrapped ? "스크랩이 취소되었습니다" : "스크랩이 완료되었습니다",
+        status: isScrapped ? "info" : "success",
+        duration: 2000,
+      });
     } catch {
-      toast({ title: "스크랩 실패", status: "error", duration: 2000 });
+      toast({ title: "스크랩 처리 중 오류 발생", status: "error", duration: 2000 });
     }
   };
 
-  if (!mounted) return null; // ✅ hydration mismatch 방지
-
-  if (isLoading) {
-    return (
-      <Box minH="100vh" display="flex" flexDirection="column">
-        <Header />
-        <Flex flex="1" justify="center" align="center" py={20}>
-          <Text>로딩 중...</Text>
-        </Flex>
-        <Footer />
-      </Box>
-    );
-  }
-
-  if (error || !data) {
-    return (
-      <Box minH="100vh" display="flex" flexDirection="column">
-        <Header />
-        <Flex flex="1" justify="center" align="center" py={20}>
-          <Text>{error || "기사를 찾을 수 없습니다."}</Text>
-        </Flex>
-        <Footer />
-      </Box>
-    );
-  }
+  if (!mounted || !data) return null;
 
   return (
-    <Box minH="100vh" display="flex" flexDirection="column">
+    <Box minH="100vh">
       <Header />
-      <Container maxW="4xl" py={20} flex="1">
+      <Container maxW="4xl" py={20}>
         <VStack align="stretch" spacing={6}>
-          <Heading as="h1" size="xl" fontWeight="extrabold">{data.title}</Heading>
+          <Heading as="h1" size="xl">{data.title}</Heading>
+
           <Flex justify="space-between" align="center">
-            <Text fontSize="sm" color="gray.600">
-              {new Date(data.publishedAt).toISOString().slice(0, 10)}
-            </Text>
-            {data.source && (
-              <ChakraLink href={data.source} isExternal>
-                <Button size="xs" colorScheme="gray" variant="outline">기사원문</Button>
-              </ChakraLink>
-            )}
+            <Flex align="center" gap={3}>
+              <Text fontSize="sm" color="gray.600">
+                {new Date(data.publishedAt).toISOString().slice(0, 10)}
+              </Text>
+              {data.sourceLink && (
+                <ChakraLink href={data.sourceLink} isExternal>
+                  <Button size="xs" variant="outline">기사원문</Button>
+                </ChakraLink>
+              )}
+            </Flex>
+            <Flex align="center" gap={2}>
+              <Text fontSize="sm" color="gray.700">스크랩하기</Text>
+              <IconButton
+                aria-label="스크랩"
+                icon={isScrapped ? <FaBookmark /> : <FaRegBookmark />}
+                onClick={handleScrap}
+                variant="solid"
+                size="sm"
+                colorScheme={isScrapped ? "yellow" : "gray"}
+              />
+            </Flex>
           </Flex>
+
           <Image src={data.image} alt={data.title} borderRadius="md" shadow="md" />
-          <Text whiteSpace="pre-line" color="gray.800" fontSize="md">{data.fullText}</Text>
+
+          <ButtonGroup isAttached variant="outline" justifyContent="start">
+            {["상", "중", "하"].map((level) => (
+              <Button
+                key={level}
+                onClick={() => setSummaryLevel(level as "상" | "중" | "하")}
+                colorScheme={summaryLevel === level ? "purple" : "gray"}
+              >
+                {level}
+              </Button>
+            ))}
+          </ButtonGroup>
+
+          <Box bg="gray.50" p={4} rounded="md">
+            <Text fontSize="md">{getSummaryText()}</Text>
+          </Box>
+
           <Flex justify="center">
-            <Link href={`/quiz/${data.id}`} passHref>
-              <Button colorScheme="purple" size="lg" px={8}>학습하러 가기</Button>
+            <Link href={`/quiz/${data.id}?level=${summaryLevel}`} passHref>
+              <Button colorScheme="purple" size="lg">학습하러 가기</Button>
             </Link>
           </Flex>
         </VStack>

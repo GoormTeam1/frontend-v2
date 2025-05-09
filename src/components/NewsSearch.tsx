@@ -10,13 +10,20 @@ import {
   Button,
   Flex,
   useToast,
+  IconButton,
 } from "@chakra-ui/react";
-import { SearchIcon } from "@chakra-ui/icons";
+import { SearchIcon, ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+const allCategories = [
+  "US", "World", "Pollitics", "Business", "Heallth", "Entertainment",
+  "Style", "Travel", "Sports", "Science", "Climate", "Weather"
+];
+
 export default function NewsSearch() {
   const [keyword, setKeyword] = useState("");
+  const [page, setPage] = useState(0);
   const router = useRouter();
   const toast = useToast();
 
@@ -39,13 +46,16 @@ export default function NewsSearch() {
     }
   };
 
+  const start = page * 6;
+  const end = start + 6;
+  const visibleCategories = allCategories.slice(start, end);
+
   return (
     <Box maxW="1000px" mx="auto" bg="purple.50" borderRadius="md" p={8}>
       <Text mb={6} fontWeight="semibold" fontSize="2xl" textAlign="center">
         뉴스 검색
       </Text>
 
-      {/* 가운데 정렬된 입력창 */}
       <Flex justify="center" mb={6}>
         <InputGroup w="600px">
           <InputLeftElement pointerEvents="none">
@@ -66,24 +76,42 @@ export default function NewsSearch() {
         </InputGroup>
       </Flex>
 
-      {/* 카테고리 버튼 */}
-      <Stack direction="row" spacing={4} justify="center">
-        {["IT", "World", "Politics", "Business", "Health", "Travel"].map((cat) => (
-          <Button
-            key={cat}
-            variant="outline"
-            size="sm"
-            colorScheme="purple"
-            bg="white"
-            onClick={() => {
-              setKeyword(cat);
-              handleSearch();
-            }}
-          >
-            {cat}
-          </Button>
-        ))}
-      </Stack>
+      {/* 카테고리 버튼들 + 페이지 이동 */}
+      <Flex justify="center" align="center" gap={2}>
+        <IconButton
+          aria-label="이전 카테고리"
+          icon={<ChevronLeftIcon />}
+          onClick={() => setPage((p) => Math.max(0, p - 1))}
+          isDisabled={page === 0}
+          variant="outline"
+          size="sm"
+        />
+        <Stack direction="row" spacing={2}>
+          {visibleCategories.map((cat) => (
+            <Button
+              key={cat}
+              variant="outline"
+              size="sm"
+              colorScheme="purple"
+              bg="white"
+              onClick={() => {
+                setKeyword(cat);
+                handleSearch();
+              }}
+            >
+              {cat}
+            </Button>
+          ))}
+        </Stack>
+        <IconButton
+          aria-label="다음 카테고리"
+          icon={<ChevronRightIcon />}
+          onClick={() => setPage((p) => (p + 1) < Math.ceil(allCategories.length / 6) ? p + 1 : p)}
+          isDisabled={end >= allCategories.length}
+          variant="outline"
+          size="sm"
+        />
+      </Flex>
     </Box>
   );
 }
