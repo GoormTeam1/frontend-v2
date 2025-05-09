@@ -92,7 +92,7 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
     return matched.summary
       .replace(/\d+\.\s*/g, "") // 번호 제거
       .replace(/\n/g, " ")      // 줄바꿈 제거
-      .trim();                  // 양쪽 공백 제거
+      .trim();
   };
 
   const handleScrap = async () => {
@@ -180,9 +180,15 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
           </Box>
 
           <Flex justify="center">
-            <Link href={`/quiz/${data.id}?level=${summaryLevel}`} passHref>
-              <Button colorScheme="purple" size="lg">학습하러 가기</Button>
-            </Link>
+            {(() => {
+              const matched = summaries.find((s) => s.level === summaryLevel);
+              if (!matched) return null;
+              return (
+                <Link href={`/quiz/${matched.id}`} passHref>
+                  <Button colorScheme="purple" size="lg">학습하러 가기</Button>
+                </Link>
+              );
+            })()}
           </Flex>
         </VStack>
       </Container>
