@@ -1,5 +1,7 @@
 "use client";
 
+import Header from "../../../components/Header";
+import Footer from "../../../components/Footer";
 import {
   Box,
   Button,
@@ -14,14 +16,12 @@ import {
   IconButton,
   Image,
 } from "@chakra-ui/react";
-import Header from "../../../components/Header";
-import Footer from "../../../components/Footer";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "@/config/env";
 import { FaRegBookmark, FaBookmark } from "react-icons/fa";
-import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
+import { useRouter } from "next/navigation";
 
 interface NewsDetailPageClientProps {
   newsId: string;
@@ -40,7 +40,7 @@ interface NewsData {
 }
 
 interface SummaryData {
-  id: number;
+  summaryId: number;
   newsId: number;
   level: "상" | "중" | "하";
   summary: string;
@@ -54,6 +54,7 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
   const [isScrapped, setIsScrapped] = useState(false);
   const [mounted, setMounted] = useState(false);
   const toast = useToast();
+  const router = useRouter();
 
   useEffect(() => setMounted(true), []);
 
@@ -80,6 +81,15 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
         }
 
         const headers = { Authorization: `Bearer ${token}` };
+
+        // ✅ 사용자 레벨 먼저 받아오기
+        const userRes = await axios.get(`${API_BASE_URL}/api/user/me`, { headers });
+        const level = userRes.data?.data?.level;
+        if (["상", "중", "하"].includes(level)) {
+          setSummaryLevel(level);
+        }
+
+        // ✅ 요약 데이터 가져오기
         const res = await axios.get(`${API_BASE_URL}/api/summary/${newsIdNumber}`, { headers });
         setSummaries(res.data);
       } catch {
@@ -139,6 +149,15 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
     }
   };
 
+  const handleGoToQuiz = () => {
+    const matched = summaries.find((s) => s.level === summaryLevel);
+    if (!matched) {
+      toast({ title: "선택한 난이도에 맞는 퀴즈가 없습니다.", status: "info", duration: 3000 });
+      return;
+    }
+    router.push(`/quiz/${matched.summaryId}`);
+  };
+
   if (!mounted || !data) return null;
 
   return (
@@ -172,11 +191,7 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
             </Flex>
           </Flex>
 
-          <Flex
-            justify="center"
-            align="center"        // 상하 중앙 정렬
-            minH="300px"          // 높이를 지정해서 세로 정렬 기준 확보
-          >
+          <Flex justify="center" align="center" minH="300px">
             <Box position="relative" w="80%" pb="45%" maxW="700px">
               <Image
                 src={data.image}
@@ -206,21 +221,14 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
             ))}
           </ButtonGroup>
 
-          {/* ✅ 요약 텍스트 패딩 + 글씨 크기 증가 */}
           <Box bg="gray.50" p={5} rounded="md">
             <Text fontSize="lg">{getSummaryText()}</Text>
           </Box>
 
           <Flex justify="center">
-            {(() => {
-              const matched = summaries.find((s) => s.level === summaryLevel);
-              if (!matched) return null;
-              return (
-                <Link href={`/quiz/${matched.id}`} passHref>
-                  <Button colorScheme="purple" size="lg">학습하러 가기</Button>
-                </Link>
-              );
-            })()}
+            <Button colorScheme="purple" size="lg" onClick={handleGoToQuiz}>
+              학습하러 가기
+            </Button>
           </Flex>
         </VStack>
       </Container>

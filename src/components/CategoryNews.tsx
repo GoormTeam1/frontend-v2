@@ -150,9 +150,7 @@ export default function CategoryNews() {
     e.currentTarget.src = "https://placehold.co/400x200?text=No+Image";
   };
 
-  if (!mounted) {
-    return null;
-  }
+  if (!mounted) return null;
 
   return (
     <Container maxW="1000px" py={8} mt={20}>
@@ -224,13 +222,8 @@ export default function CategoryNews() {
                 <>
                   <Box>
                     {articles.map((article) => (
-                      <Link href={`/news/${article.id}`} passHref>
+                      <Link href={`/news/${article.id}`} key={article.id}>
                         <Box
-                          key={article.id}
-                          as="a"
-
-                          target="_blank"
-                          rel="noopener noreferrer"
                           mb={4}
                           bg="white"
                           borderRadius="md"
@@ -309,4 +302,4 @@ export default function CategoryNews() {
       </Tabs>
     </Container>
   );
-} 
+}

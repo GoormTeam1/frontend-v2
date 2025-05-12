@@ -102,8 +102,12 @@ export default function ScrapedArticlesSlider() {
     else setLoading(false);
   }, [scraps]);
 
-  const handlePrev = () => setStartIdx((prev) => Math.max(prev - 1, 0));
-  const handleNext = () => setStartIdx((prev) => Math.min(prev + 1, articles.length - visibleCount));
+  const handlePrev = () => setStartIdx((prev) => Math.max(prev - visibleCount, 0));
+  const handleNext = () =>
+    setStartIdx((prev) =>
+      prev + visibleCount >= articles.length ? prev : prev + visibleCount
+    );
+
   const visibleArticles = articles.slice(startIdx, startIdx + visibleCount);
 
   if (loading) {
@@ -124,9 +128,7 @@ export default function ScrapedArticlesSlider() {
 
   return (
     <Box>
-      <Text fontSize="2xl" fontWeight="bold" mb={6} pl={36}>
-        스크랩한 기사
-      </Text>
+
       <Flex align="center" justify="center">
         <IconButton
           aria-label="이전"
@@ -175,7 +177,7 @@ export default function ScrapedArticlesSlider() {
           aria-label="다음"
           icon={<ChevronRightIcon boxSize={6} />}
           onClick={handleNext}
-          isDisabled={startIdx >= articles.length - visibleCount}
+          isDisabled={startIdx + visibleCount >= articles.length}
           variant="ghost"
           ml={2}
         />
