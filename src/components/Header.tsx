@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { jwtDecode } from "jwt-decode";
+import Image from "next/image";
+
 
 interface DecodedToken {
   sub: string;          // e.g. email or id
@@ -75,7 +77,7 @@ export default function Header() {
     if (pathname === "/search") return 2;
     return 0;
   };
-  
+
   return (
     <Box
       as="header"
@@ -97,13 +99,18 @@ export default function Header() {
           )}
         </Box>
         {/* 가운데: 팀명 */}
-        <Box flex="1" textAlign="center">
+        <Box flex="1" display="flex" justifyContent="center">
           <Link href="/">
-            <Heading size="xl" cursor="pointer">
-              NeWordS
-            </Heading>
+            <Image
+              src="/logo.png"
+              alt="NeWordS Logo"
+              width={100}
+              height={1}
+              style={{ cursor: 'pointer' }}
+            />
           </Link>
         </Box>
+
         {/* 오른쪽: 로그인 상태 */}
         <Box>
           {user ? (
@@ -153,7 +160,7 @@ export default function Header() {
         align="center"
         mt={4}
         mb={0.4}
-      > 
+      >
         <TabList>
           <Tab>Home</Tab>
           <Tab>나의 학습내역</Tab>
