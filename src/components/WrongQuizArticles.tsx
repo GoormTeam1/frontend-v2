@@ -63,14 +63,7 @@ export default function WrongQuizArticles() {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        setLoading(false);
-        toast({
-          title: "로그인 필요",
-          description: "로그인 후 다시 시도해주세요.",
-          status: "warning",
-          duration: 3000,
-          isClosable: true,
-        });
+        setLoading(false); // ✅ 조용히 실패 처리
         return;
       }
 
@@ -96,12 +89,17 @@ export default function WrongQuizArticles() {
     };
 
     fetchWrongSummaries();
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     const fetchArticles = async () => {
       try {
         const token = localStorage.getItem("token");
+        if (!token) {
+          setLoading(false); // ✅ 여기서도 방어 처리
+          return;
+        }
+
         const fetched: NewsArticle[] = [];
 
         for (const item of wrongSummaries) {
@@ -168,7 +166,6 @@ export default function WrongQuizArticles() {
 
   return (
     <Box>
-
       <Flex align="center" justify="center">
         <IconButton
           aria-label="이전"
