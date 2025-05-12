@@ -7,6 +7,7 @@ import NewsSearch from "@/components/NewsSearch";
 import ArticleSlider from "@/components/Articleslider";
 import CategoryNews from "@/components/CategoryNews";
 import Footer from "@/components/Footer";
+import Hero from "@/components/Hero";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -22,6 +23,7 @@ export default function Home() {
   return (
     <>
       <Header />
+      <Hero />
       <Box as="main" p={8} maxW="1200px" mx="auto">
         <ArticleSlider />
         <Box mt={20}>
