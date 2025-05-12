@@ -28,9 +28,10 @@ interface QuizData {
 }
 
 function maskBlank(sentence: string, word: string): string {
-  const regex = new RegExp(`\\b${word}\\b`, "i");
+  const regex = new RegExp(`${word}`, "i"); // 단어 경계 제거
   return sentence.replace(regex, "_____");
 }
+
 
 function getEmailFromToken(token: string | null): string | null {
   if (!token) return null;
