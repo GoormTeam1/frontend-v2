@@ -84,7 +84,7 @@ export default function SearchPage() {
     };
 
     fetchSearchResults();
-  }, [keyword, currentPage, sortOrder, toast]);
+  }, [keyword, currentPage, sortOrder]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -93,7 +93,7 @@ export default function SearchPage() {
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSortOrder(e.target.value as SortOrder);
-    setCurrentPage(0); // 정렬 변경 시 첫 페이지로 이동
+    setCurrentPage(0);
   };
 
   const renderPaginationButtons = () => {
@@ -104,12 +104,10 @@ export default function SearchPage() {
     let startPage = Math.max(0, currentPage - halfVisiblePages);
     let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 1);
 
-    // 시작 페이지 조정
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(0, endPage - maxVisiblePages + 1);
     }
 
-    // 이전 페이지 버튼
     buttons.push(
       <Button
         key="prev"
@@ -122,28 +120,17 @@ export default function SearchPage() {
       </Button>
     );
 
-    // 첫 페이지로 이동 버튼 (필요한 경우)
     if (startPage > 0) {
       buttons.push(
-        <Button
-          key="first"
-          onClick={() => handlePageChange(0)}
-          variant="outline"
-          colorScheme="purple"
-        >
+        <Button key="first" onClick={() => handlePageChange(0)} variant="outline" colorScheme="purple">
           1
         </Button>
       );
       if (startPage > 1) {
-        buttons.push(
-          <Text key="first-ellipsis" mx={2}>
-            ...
-          </Text>
-        );
+        buttons.push(<Text key="first-ellipsis" mx={2}>...</Text>);
       }
     }
 
-    // 페이지 번호 버튼들
     for (let i = startPage; i <= endPage; i++) {
       buttons.push(
         <Button
@@ -157,28 +144,17 @@ export default function SearchPage() {
       );
     }
 
-    // 마지막 페이지로 이동 버튼 (필요한 경우)
     if (endPage < totalPages - 1) {
       if (endPage < totalPages - 2) {
-        buttons.push(
-          <Text key="last-ellipsis" mx={2}>
-            ...
-          </Text>
-        );
+        buttons.push(<Text key="last-ellipsis" mx={2}>...</Text>);
       }
       buttons.push(
-        <Button
-          key="last"
-          onClick={() => handlePageChange(totalPages - 1)}
-          variant="outline"
-          colorScheme="purple"
-        >
+        <Button key="last" onClick={() => handlePageChange(totalPages - 1)} variant="outline" colorScheme="purple">
           {totalPages}
         </Button>
       );
     }
 
-    // 다음 페이지 버튼
     buttons.push(
       <Button
         key="next"
@@ -235,20 +211,10 @@ export default function SearchPage() {
           </Box>
         ) : (
           <>
-            <Grid
-              templateColumns="repeat(3, 1fr)"
-              gap={6}
-              mb={8}
-            >
+            <Grid templateColumns="repeat(3, 1fr)" gap={6} mb={8}>
               {articles.map((article) => (
-
-                <Link key={article.id} href={`/news/${article.id}`} passHref>
+                <Link key={article.id} href={`/news/${article.id}`}>
                   <Box
-                    key={article.id}
-                    as="a"
-                    href={article.sourceLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     bg="white"
                     borderRadius="md"
                     overflow="hidden"
@@ -264,16 +230,10 @@ export default function SearchPage() {
                     />
                     <Box p={4}>
                       <Flex justify="space-between" mb={2}>
-                        <Text fontSize="sm" color="gray.500">
-                          {article.category}
-                        </Text>
-                        <Text fontSize="xs" color="gray.400">
-                          {new Date(article.publishedAt).toLocaleDateString()}
-                        </Text>
+                        <Text fontSize="sm" color="gray.500">{article.category}</Text>
+                        <Text fontSize="xs" color="gray.400">{new Date(article.publishedAt).toLocaleDateString()}</Text>
                       </Flex>
-                      <Text fontWeight="semibold" noOfLines={3}>
-                        {article.title}
-                      </Text>
+                      <Text fontWeight="semibold" noOfLines={3}>{article.title}</Text>
                     </Box>
                   </Box>
                 </Link>
