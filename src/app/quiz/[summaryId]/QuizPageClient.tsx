@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/env";
 
 interface QuizPageClientProps {
-  newsId: string;
+  summaryId: string;
 }
 
 interface QuizData {
@@ -28,10 +28,9 @@ interface QuizData {
 }
 
 function maskBlank(sentence: string, word: string): string {
-  const regex = new RegExp(`${word}`, "i"); // 단어 경계 제거
+  const regex = new RegExp(`${word}`, "i");
   return sentence.replace(regex, "_____");
 }
-
 
 function getEmailFromToken(token: string | null): string | null {
   if (!token) return null;
@@ -45,8 +44,8 @@ function getEmailFromToken(token: string | null): string | null {
   }
 }
 
-export default function QuizPageClient({ newsId }: QuizPageClientProps) {
-  const newsIdNumber = parseInt(newsId, 10);
+export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
+  const summaryIdNumber = parseInt(summaryId, 10);
   const toast = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -95,14 +94,12 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
     setIsLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`${API_BASE_URL}/api/quiz/${newsIdNumber}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await axios.get(`${API_BASE_URL}/api/quiz/${summaryIdNumber}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
       setQuizList(res.data.sort((a: QuizData, b: QuizData) => a.sentenceIndex - b.sentenceIndex));
       setCurrentIndex(0);
-    } catch (err) {
+    } catch {
       toast({
         title: "퀴즈 데이터를 불러오는 데 실패했습니다.",
         status: "error",
@@ -116,7 +113,7 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
 
   useEffect(() => {
     fetchQuizList();
-  }, [newsId]);
+  }, [summaryId]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -164,7 +161,7 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
           if (email) {
             await axios.post(`${API_BASE_URL}/api/quiz/wrong`, {
               userEmail: email,
-              summaryId: newsIdNumber,
+              summaryId: summaryIdNumber,
             }, {
               headers: { Authorization: `Bearer ${token}` },
             });
@@ -184,7 +181,7 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
       const token = localStorage.getItem("token");
       const email = getEmailFromToken(token);
       if (email) {
-        await axios.delete(`${API_BASE_URL}/api/quiz/wrong/${newsIdNumber}`, {
+        await axios.delete(`${API_BASE_URL}/api/quiz/wrong/${summaryIdNumber}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "X-User-Email": email,
@@ -203,38 +200,129 @@ export default function QuizPageClient({ newsId }: QuizPageClientProps) {
     }
   };
 
-  if (isLoading) return (<Box minH="100vh"><Header /><Flex justify="center" align="center" py={20}><Text>퀴즈를 불러오는 중입니다...</Text></Flex><Footer /></Box>);
-  if (!quiz) return (<Box minH="100vh"><Header /><Flex justify="center" align="center" py={20}><Text>퀴즈를 불러오는데 실패했습니다.</Text></Flex><Footer /></Box>);
+  if (isLoading) {
+    return (
+      <Box minH="100vh">
+        <Header />
+        <Flex justify="center" align="center" py={20}>
+          <Text>퀴즈를 불러오는 중입니다...</Text>
+        </Flex>
+        <Footer />
+      </Box>
+    );
+  }
+
+  if (quizList.length === 0) {
+    return (
+      <Box minH="100vh">
+        <Header />
+        <Flex justify="center" align="center" py={20}>
+          <Text>퀴즈 데이터가 존재하지 않습니다.</Text>
+        </Flex>
+        <Footer />
+      </Box>
+    );
+  }
 
   return (
     <Box minH="100vh" display="flex" flexDirection="column">
       <Header />
       <Box maxW="4xl" mx="auto" px={4} py={20} flex="1">
-        <Heading size="lg" mb={6}>문장 {quiz.sentenceIndex} / {quizList.length}</Heading>
-        <Text fontSize="2xl" fontWeight="semibold" mb={6}>{maskBlank(quiz.sentenceText, quiz.blankWord)}</Text>
-        <Text fontSize="xl" color="gray.600" mb={12}>{quiz.translateText}</Text>
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-          <Input ref={inputRef} placeholder="빈칸을 채워주세요." value={answer} onChange={(e) => setAnswer(e.target.value)} mb={6} isDisabled={showAnswer} size="lg" fontSize="lg" />
+        <Heading size="lg" mb={6}>
+          문장 {quiz.sentenceIndex} / {quizList.length}
+        </Heading>
+        <Text fontSize="2xl" fontWeight="semibold" mb={6}>
+          {maskBlank(quiz.sentenceText, quiz.blankWord)}
+        </Text>
+        <Text fontSize="xl" color="gray.600" mb={12}>
+          {quiz.translateText}
+        </Text>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+        >
+          <Input
+            ref={inputRef}
+            placeholder="빈칸을 채워주세요."
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            mb={6}
+            isDisabled={showAnswer}
+            size="lg"
+            fontSize="lg"
+          />
           <Flex justify="center">
-            <Button type="submit" colorScheme="purple" isDisabled={showAnswer || isSubmitting} mb={6} size="lg" px={8}>제출</Button>
+            <Button
+              type="submit"
+              colorScheme="purple"
+              isDisabled={showAnswer || isSubmitting}
+              mb={6}
+              size="lg"
+              px={8}
+            >
+              제출
+            </Button>
           </Flex>
         </form>
         {canRevealAnswer && !showAnswer && (
           <Flex justify="center" mt={4}>
-            <Button onClick={() => setShowAnswer(true)} colorScheme="gray" variant="outline" size="md">정답 보기</Button>
+            <Button
+              onClick={() => setShowAnswer(true)}
+              colorScheme="gray"
+              variant="outline"
+              size="md"
+            >
+              정답 보기
+            </Button>
           </Flex>
         )}
         {showAnswer && (
           <Box mt={8} p={6} bg="gray.50" borderRadius="md">
-            <Text fontSize="lg" fontWeight="bold" color="green.500" mb={6}>정답: {quiz.blankWord}</Text>
+            <Text fontSize="lg" fontWeight="bold" color="green.500" mb={6}>
+              정답: {quiz.blankWord}
+            </Text>
             <Flex justify="center" gap={4}>
-              {currentIndex > 0 && <Button onClick={handlePrevQuiz} colorScheme="gray" variant="outline" size="lg" px={8}>이전 문제</Button>}
+              {currentIndex > 0 && (
+                <Button
+                  onClick={handlePrevQuiz}
+                  colorScheme="gray"
+                  variant="outline"
+                  size="lg"
+                  px={8}
+                >
+                  이전 문제
+                </Button>
+              )}
               {currentIndex < quizList.length - 1 ? (
-                <Button onClick={handleNextQuiz} colorScheme="purple" variant="outline" size="lg" px={8}>다음 문제</Button>
+                <Button
+                  onClick={handleNextQuiz}
+                  colorScheme="purple"
+                  variant="outline"
+                  size="lg"
+                  px={8}
+                >
+                  다음 문제
+                </Button>
               ) : (
                 <>
-                  <Button onClick={handleDeleteWrongQuiz} colorScheme="orange" size="lg" px={8}>정답 처리하기</Button>
-                  <Button onClick={() => router.push("/")} colorScheme="green" size="lg" px={8}>홈으로 돌아가기</Button>
+                  <Button
+                    onClick={handleDeleteWrongQuiz}
+                    colorScheme="orange"
+                    size="lg"
+                    px={8}
+                  >
+                    정답 처리하기
+                  </Button>
+                  <Button
+                    onClick={() => router.push("/")}
+                    colorScheme="green"
+                    size="lg"
+                    px={8}
+                  >
+                    홈으로 돌아가기
+                  </Button>
                 </>
               )}
             </Flex>

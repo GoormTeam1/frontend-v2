@@ -1,12 +1,18 @@
 "use client";
 
-import { Box, Container, Heading, useToast, Divider, SimpleGrid } from "@chakra-ui/react";
+import {
+  Box,
+  Container,
+  Heading,
+  useToast,
+} from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from '@/config/env';
 import Header from "@/components/Header";
 import UserProfile from "../../components/UserProfile";
-import ScrapedArticles from "@/components/ScrapedArticles"; 
-import WrongQuizArticles from "@/components/WrongQuizArticles"; 
+import ScrapedArticles from "@/components/ScrapedArticles";
+import WrongQuizArticles from "@/components/WrongQuizArticles";
+import Footer from "@/components/Footer";
 
 type UserData = {
   name: string;
@@ -28,9 +34,7 @@ export default function MyPage() {
         if (!token) throw new Error("로그인 토큰이 없습니다.");
 
         const response = await fetch(`${API_BASE_URL}/api/user/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         const contentType = response.headers.get("content-type");
@@ -161,33 +165,39 @@ export default function MyPage() {
             >
               My Learning Progress
             </Heading>
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8}>
-              <Box
-                bg="white"
-                rounded="xl"
-                shadow="sm"
-                p={6}
-              >
-                <Heading as="h3" size="md" mb={4} color="gray.700">
-                  Saved Articles
-                </Heading>
-                <ScrapedArticles />
-              </Box>
-              <Box
-                bg="white"
-                rounded="xl"
-                shadow="sm"
-                p={6}
-              >
-                <Heading as="h3" size="md" mb={4} color="gray.700">
-                  Quiz History
-                </Heading>
-                <WrongQuizArticles />
-              </Box>
-            </SimpleGrid>
+
+            {/* 스크랩한 기사 박스 */}
+            <Box
+              bg="white"
+              rounded="xl"
+              shadow="sm"
+              p={6}
+              mb={10}
+              w="100%"
+            >
+              <Heading as="h3" size="md" mb={4} color="gray.700">
+                Saved Articles
+              </Heading>
+              <ScrapedArticles />
+            </Box>
+
+            {/* 오답 기사 박스 */}
+            <Box
+              bg="white"
+              rounded="xl"
+              shadow="sm"
+              p={6}
+              w="100%"
+            >
+              <Heading as="h3" size="md" mb={4} color="gray.700">
+                Quiz History
+              </Heading>
+              <WrongQuizArticles />
+            </Box>
           </Box>
         </Container>
       </Box>
+      <Footer />
     </>
   );
 }
