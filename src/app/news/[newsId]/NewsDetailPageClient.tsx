@@ -8,11 +8,11 @@ import {
   Heading,
   useToast,
   VStack,
-  Image,
   Link as ChakraLink,
   Container,
   ButtonGroup,
   IconButton,
+  Image,
 } from "@chakra-ui/react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
@@ -36,7 +36,7 @@ interface NewsData {
   category: string;
   publishedAt: string;
   createdAt: string;
-  scrabbed: boolean; // ✅ 서버에서 받아온 스크랩 상태
+  scrabbed: boolean;
 }
 
 interface SummaryData {
@@ -130,14 +130,10 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
           },
           { headers }
         );
+        toast({ title: "스크랩이 완료되었습니다", status: "success", duration: 2000 });
       }
 
       setIsScrapped(!isScrapped);
-      toast({
-        title: isScrapped ? "스크랩이 취소되었습니다" : "스크랩이 완료되었습니다",
-        status: isScrapped ? "info" : "success",
-        duration: 2000,
-      });
     } catch {
       toast({ title: "스크랩 처리 중 오류 발생", status: "error", duration: 2000 });
     }
@@ -176,7 +172,27 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
             </Flex>
           </Flex>
 
-          <Image src={data.image} alt={data.title} borderRadius="md" shadow="md" />
+          <Flex
+            justify="center"
+            align="center"        // 상하 중앙 정렬
+            minH="300px"          // 높이를 지정해서 세로 정렬 기준 확보
+          >
+            <Box position="relative" w="80%" pb="45%" maxW="700px">
+              <Image
+                src={data.image}
+                alt={data.title}
+                position="absolute"
+                top={0}
+                left={0}
+                width="100%"
+                height="100%"
+                objectFit="cover"
+                borderRadius="md"
+                shadow="md"
+                fallbackSrc="https://via.placeholder.com/400x200?text=No+Image"
+              />
+            </Box>
+          </Flex>
 
           <ButtonGroup isAttached variant="outline" justifyContent="start">
             {["상", "중", "하"].map((level) => (
@@ -190,8 +206,9 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
             ))}
           </ButtonGroup>
 
-          <Box bg="gray.50" p={4} rounded="md">
-            <Text fontSize="md">{getSummaryText()}</Text>
+          {/* ✅ 요약 텍스트 패딩 + 글씨 크기 증가 */}
+          <Box bg="gray.50" p={5} rounded="md">
+            <Text fontSize="lg">{getSummaryText()}</Text>
           </Box>
 
           <Flex justify="center">
