@@ -21,6 +21,7 @@ import {
 import { useState, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import { API_BASE_URL } from '@/config/env';
+import Link from "next/link";
 
 interface NewsArticle {
   id: number;
@@ -93,7 +94,7 @@ export default function CategoryNews() {
         const response = await fetch(
           `${API_BASE_URL}/api/news/category/${selectedCategory}?page=${currentPage}&size=9&sort=publishedAt,${sortOrder === "latest" ? "desc" : "asc"}`
         );
-        
+
         if (!response.ok) {
           throw new Error("카테고리 뉴스를 불러오는데 실패했습니다.");
         }
@@ -155,9 +156,9 @@ export default function CategoryNews() {
 
   return (
     <Container maxW="1000px" py={8} mt={20}>
-      <Tabs 
-        variant="soft-rounded" 
-        colorScheme="purple" 
+      <Tabs
+        variant="soft-rounded"
+        colorScheme="purple"
         onChange={handleCategoryChange}
         defaultIndex={0}
       >
@@ -171,8 +172,8 @@ export default function CategoryNews() {
           />
           <TabList flexWrap="nowrap" gap={2} overflow="hidden">
             {visibleCategories.map((category, index) => (
-              <Tab 
-                key={category.id} 
+              <Tab
+                key={category.id}
                 whiteSpace="nowrap"
                 _selected={{ bg: "purple.500", color: "white" }}
               >
@@ -223,46 +224,48 @@ export default function CategoryNews() {
                 <>
                   <Box>
                     {articles.map((article) => (
-                      <Box
-                        key={article.id}
-                        as="a"
-                        href={article.sourceLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        mb={4}
-                        bg="white"
-                        borderRadius="md"
-                        overflow="hidden"
-                        boxShadow="md"
-                        _hover={{ transform: "translateY(-2px)", transition: "transform 0.2s" }}
-                      >
-                        <Flex p={4}>
-                          <Image
-                            src={article.image}
-                            alt={article.title}
-                            width="250px"
-                            height="200px"
-                            objectFit="cover"
-                            onError={handleImageError}
-                            fallbackSrc="https://placehold.co/400x200?text=No+Image"
-                          />
-                          <Box p={4} flex="1">
-                            <Flex direction="column" height="100%" justify="space-between">
-                              <Box>
-                                <Text fontSize="xl" color="gray.500" mb={1}>
-                                  {article.category}
+                      <Link href={`/news/${article.id}`} passHref>
+                        <Box
+                          key={article.id}
+                          as="a"
+
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          mb={4}
+                          bg="white"
+                          borderRadius="md"
+                          overflow="hidden"
+                          boxShadow="md"
+                          _hover={{ transform: "translateY(-2px)", transition: "transform 0.2s" }}
+                        >
+                          <Flex p={4}>
+                            <Image
+                              src={article.image}
+                              alt={article.title}
+                              width="250px"
+                              height="200px"
+                              objectFit="cover"
+                              onError={handleImageError}
+                              fallbackSrc="https://placehold.co/400x200?text=No+Image"
+                            />
+                            <Box p={4} flex="1">
+                              <Flex direction="column" height="100%" justify="space-between">
+                                <Box>
+                                  <Text fontSize="xl" color="gray.500" mb={1}>
+                                    {article.category}
+                                  </Text>
+                                  <Text fontWeight="semibold" fontSize="xl" noOfLines={2}>
+                                    {article.title}
+                                  </Text>
+                                </Box>
+                                <Text fontSize="md" color="gray.500">
+                                  {formatDate(article.publishedAt)}
                                 </Text>
-                                <Text fontWeight="semibold" fontSize="xl" noOfLines={2}>
-                                  {article.title}
-                                </Text>
-                              </Box>
-                              <Text fontSize="md" color="gray.500">
-                                {formatDate(article.publishedAt)}
-                              </Text>
-                            </Flex>
-                          </Box>
-                        </Flex>
-                      </Box>
+                              </Flex>
+                            </Box>
+                          </Flex>
+                        </Box>
+                      </Link>
                     ))}
                   </Box>
 

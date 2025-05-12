@@ -19,6 +19,7 @@ import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import NewsSearch from "@/components/NewsSearch";
 import { API_BASE_URL } from '@/config/env';
+import Link from "next/link";
 
 interface NewsArticle {
   id: number;
@@ -56,13 +57,13 @@ export default function SearchPage() {
   useEffect(() => {
     const fetchSearchResults = async () => {
       if (!keyword) return;
-      
+
       try {
         setLoading(true);
         const response = await fetch(
           `${API_BASE_URL}/api/news/search?keyword=${encodeURIComponent(keyword)}&page=${currentPage}&size=9&sort=publishedAt,${sortOrder === "latest" ? "desc" : "asc"}`
         );
-        
+
         if (!response.ok) {
           throw new Error("검색 결과를 불러오는데 실패했습니다.");
         }
@@ -240,39 +241,42 @@ export default function SearchPage() {
               mb={8}
             >
               {articles.map((article) => (
-                <Box
-                  key={article.id}
-                  as="a"
-                  href={article.sourceLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  bg="white"
-                  borderRadius="md"
-                  overflow="hidden"
-                  boxShadow="md"
-                  _hover={{ transform: "translateY(-4px)", transition: "transform 0.2s" }}
-                >
-                  <Image
-                    src={article.image}
-                    alt={article.title}
-                    width="100%"
-                    height="200px"
-                    objectFit="cover"
-                  />
-                  <Box p={4}>
-                    <Flex justify="space-between" mb={2}>
-                      <Text fontSize="sm" color="gray.500">
-                        {article.category}
+
+                <Link key={article.id} href={`/news/${article.id}`} passHref>
+                  <Box
+                    key={article.id}
+                    as="a"
+                    href={article.sourceLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    bg="white"
+                    borderRadius="md"
+                    overflow="hidden"
+                    boxShadow="md"
+                    _hover={{ transform: "translateY(-4px)", transition: "transform 0.2s" }}
+                  >
+                    <Image
+                      src={article.image}
+                      alt={article.title}
+                      width="100%"
+                      height="200px"
+                      objectFit="cover"
+                    />
+                    <Box p={4}>
+                      <Flex justify="space-between" mb={2}>
+                        <Text fontSize="sm" color="gray.500">
+                          {article.category}
+                        </Text>
+                        <Text fontSize="xs" color="gray.400">
+                          {new Date(article.publishedAt).toLocaleDateString()}
+                        </Text>
+                      </Flex>
+                      <Text fontWeight="semibold" noOfLines={3}>
+                        {article.title}
                       </Text>
-                      <Text fontSize="xs" color="gray.400">
-                        {new Date(article.publishedAt).toLocaleDateString()}
-                      </Text>
-                    </Flex>
-                    <Text fontWeight="semibold" noOfLines={3}>
-                      {article.title}
-                    </Text>
+                    </Box>
                   </Box>
-                </Box>
+                </Link>
               ))}
             </Grid>
 
