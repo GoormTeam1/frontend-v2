@@ -48,7 +48,10 @@ export default function ScrapedArticlesSlider() {
     const fetchScrapData = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) throw new Error("토큰 없음");
+        if (!token) {
+          setLoading(false); // ✅ 조용히 실패 처리
+          return;
+        }
 
         const decoded = jwtDecode<{ sub: string }>(token);
         const email = decoded.sub;
@@ -128,7 +131,6 @@ export default function ScrapedArticlesSlider() {
 
   return (
     <Box>
-
       <Flex align="center" justify="center">
         <IconButton
           aria-label="이전"

@@ -6,7 +6,7 @@ import {
   Heading,
   useToast,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { API_BASE_URL } from '@/config/env';
 import Header from "@/components/Header";
 import UserProfile from "../../components/UserProfile";
@@ -25,14 +25,30 @@ type UserData = {
 
 export default function MyPage() {
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [tokenExists, setTokenExists] = useState(true);
   const toast = useToast();
+  const toastShown = useRef(false); // ✅ 중복 방지 플래그
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setTokenExists(false);
+      if (!toastShown.current) {
+        toastShown.current = true; // ✅ 이미 띄운 경우 다시 안 띄움
+        toast({
+          title: "로그인 필요",
+          description: "로그인 후 다시 시도해주세요.",
+          status: "warning",
+          duration: 4000,
+          isClosable: true,
+        });
+      }
+      return;
+    }
+
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) throw new Error("로그인 토큰이 없습니다.");
-
         const response = await fetch(`${API_BASE_URL}/api/user/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -166,34 +182,23 @@ export default function MyPage() {
               My Learning Progress
             </Heading>
 
-            {/* 스크랩한 기사 박스 */}
-            <Box
-              bg="white"
-              rounded="xl"
-              shadow="sm"
-              p={6}
-              mb={10}
-              w="100%"
-            >
-              <Heading as="h3" size="md" mb={4} color="gray.700">
-                Saved Articles
-              </Heading>
-              <ScrapedArticles />
-            </Box>
+            {tokenExists && (
+              <>
+                <Box bg="white" rounded="xl" shadow="sm" p={6} mb={10} w="100%">
+                  <Heading as="h3" size="md" mb={4} color="gray.700">
+                    Saved Articles
+                  </Heading>
+                  <ScrapedArticles />
+                </Box>
 
-            {/* 오답 기사 박스 */}
-            <Box
-              bg="white"
-              rounded="xl"
-              shadow="sm"
-              p={6}
-              w="100%"
-            >
-              <Heading as="h3" size="md" mb={4} color="gray.700">
-                Quiz History
-              </Heading>
-              <WrongQuizArticles />
-            </Box>
+                <Box bg="white" rounded="xl" shadow="sm" p={6} w="100%">
+                  <Heading as="h3" size="md" mb={4} color="gray.700">
+                    Quiz History
+                  </Heading>
+                  <WrongQuizArticles />
+                </Box>
+              </>
+            )}
           </Box>
         </Container>
       </Box>
