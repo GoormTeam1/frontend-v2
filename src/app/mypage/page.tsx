@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Container, Heading, useToast, Divider } from "@chakra-ui/react";
+import { Box, Container, Heading, useToast, Divider, SimpleGrid } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from '@/config/env';
 import Header from "@/components/Header";
@@ -123,21 +123,71 @@ export default function MyPage() {
   return (
     <>
       <Header />
-      <Container maxW="container.xl" py={8}>
-        <Box mb={12}>
-          <Heading as="h1" size="lg" mb={6} pl={36}>
-            마이페이지
-          </Heading>
-          {userData && (
-            <UserProfile {...userData} onUpdate={handleProfileUpdate} />
-          )}
-        </Box>
+      <Box bg="gray.50" minH="100vh">
+        <Container maxW="container.xl" py={12}>
+          <Box mb={12}>
+            <Heading
+              as="h1"
+              size="xl"
+              mb={8}
+              color="gray.800"
+              fontFamily="serif"
+              textAlign="center"
+            >
+              My Learning Dashboard
+            </Heading>
+            {userData && (
+              <Box
+                bg="white"
+                rounded="xl"
+                shadow="sm"
+                p={8}
+                maxW="4xl"
+                mx="auto"
+              >
+                <UserProfile {...userData} onUpdate={handleProfileUpdate} />
+              </Box>
+            )}
+          </Box>
 
-        <Divider my={10} />
-        
-        <ScrapedArticles />
-        <WrongQuizArticles />
-      </Container>
+          <Box mb={12}>
+            <Heading
+              as="h2"
+              size="lg"
+              mb={6}
+              color="gray.800"
+              fontFamily="serif"
+              textAlign="center"
+            >
+              My Learning Progress
+            </Heading>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8}>
+              <Box
+                bg="white"
+                rounded="xl"
+                shadow="sm"
+                p={6}
+              >
+                <Heading as="h3" size="md" mb={4} color="gray.700">
+                  Saved Articles
+                </Heading>
+                <ScrapedArticles />
+              </Box>
+              <Box
+                bg="white"
+                rounded="xl"
+                shadow="sm"
+                p={6}
+              >
+                <Heading as="h3" size="md" mb={4} color="gray.700">
+                  Quiz History
+                </Heading>
+                <WrongQuizArticles />
+              </Box>
+            </SimpleGrid>
+          </Box>
+        </Container>
+      </Box>
     </>
   );
 }
