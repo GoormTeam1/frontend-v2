@@ -28,7 +28,7 @@ export default function InterstitialAd({ onClose }: InterstitialAdProps) {
   const [ad, setAd] = useState<AdData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ ACTIVE 광고 중 하나 랜덤 선택
+  // ✅ QUIZ_END + ACTIVE 광고 중 랜덤 선택
   useEffect(() => {
     const fetchAd = async () => {
       try {
@@ -45,20 +45,22 @@ export default function InterstitialAd({ onClose }: InterstitialAdProps) {
         if (!res.ok) throw new Error("광고 데이터 조회 실패");
 
         const data = await res.json();
-        const activeAds = data.filter((item: any) => item.status === "ACTIVE");
-        if (activeAds.length === 0) return;
 
-        const randomIndex = Math.floor(Math.random() * activeAds.length);
-        const selected = activeAds[randomIndex];
+        // ✅ QUIZ_END + ACTIVE 조건 필터링
+        const validAds = data.filter(
+          (item: any) => item.status === "ACTIVE" && item.type === "QUIZ_END"
+        );
+        if (validAds.length === 0) return;
 
-        const adItem = {
+        const randomIndex = Math.floor(Math.random() * validAds.length);
+        const selected = validAds[randomIndex];
+
+        setAd({
           id: selected.id,
           imageUrl: selected.imageUrl,
           linkUrl: selected.linkUrl,
           title: selected.title,
-        };
-
-        setAd(adItem);
+        });
       } catch {
         // 에러 무시
       } finally {
@@ -69,26 +71,21 @@ export default function InterstitialAd({ onClose }: InterstitialAdProps) {
     fetchAd();
   }, []);
 
-  // ✅ 선택된 광고에 대해서만 viewCount 증가
+  // ✅ 광고 조회수 증가
   useEffect(() => {
     const increaseViewCount = async () => {
       if (!ad) return;
-
       try {
         const token = localStorage.getItem("admin_token");
         if (!token) return;
-
         await fetch(`${API_BASE_URL}/admin/ads/${ad.id}/view`, {
           method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-      } catch {
-        // 무시
-      }
+      } catch {}
     };
-
     increaseViewCount();
   }, [ad]);
 
@@ -109,7 +106,6 @@ export default function InterstitialAd({ onClose }: InterstitialAdProps) {
     return () => clearInterval(timer);
   }, [ad]);
 
-  // 광고 클릭
   const handleAdClick = async () => {
     if (!ad) return;
 
@@ -123,9 +119,7 @@ export default function InterstitialAd({ onClose }: InterstitialAdProps) {
           Authorization: `Bearer ${token}`,
         },
       });
-    } catch {
-      // 무시
-    }
+    } catch {}
 
     window.open(ad.linkUrl, "_blank");
   };
