@@ -173,30 +173,42 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
     setTimeout(() => setIsSubmitting(false), 1500);
   };
 
-  const handleDeleteWrongQuiz = async () => {
+  const handleChangeWrongQuiz = async () => {
     try {
       const token = localStorage.getItem("token");
       const email = getEmailFromToken(token);
+  
       if (email) {
-        await axios.delete(`${API_BASE_URL}/api/quiz/wrong/${summaryIdNumber}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "X-User-Email": email,
+        await axios.patch(
+          `${API_BASE_URL}/api/quiz/wrong/${summaryIdNumber}`,
+          {
+            status: "completed", // PATCH 요청의 데이터
           },
-        });
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "X-User-Email": email,
+            },
+          }
+        );
+  
         toast({
-          title: "오답 기록이 삭제되었습니다.",
+          title: "오답 상태가 완료로 변경되었습니다.",
           status: "info",
           duration: 2000,
           isClosable: true,
         });
       }
     } catch (err) {
-      console.error("오답 삭제 실패", err);
-      toast({ title: "오답 삭제 실패", status: "error", duration: 3000 });
+      console.error("오답 상태 변경 실패", err);
+      toast({
+        title: "오답 상태 변경 실패",
+        status: "error",
+        duration: 3000,
+      });
     }
   };
-
+  
   if (isLoading) {
     return (
       <Box minH="100vh">
@@ -312,7 +324,7 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
               ) : (
                 <>
                   <Button
-                    onClick={handleDeleteWrongQuiz}
+                    onClick={handleChangeWrongQuiz}
                     colorScheme="orange"
                     size="lg"
                     px={8}
