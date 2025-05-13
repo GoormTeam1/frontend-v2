@@ -6,6 +6,7 @@ import {
   Image,
   Text,
   IconButton,
+  Badge,
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
@@ -33,7 +34,11 @@ interface DecodedToken {
   exp: number;
 }
 
+
+type LearningStatus = 'learning' | 'not_learning' | 'completed';
+
 const DEFAULT_IMAGE = "https://placehold.co/400x200?text=No+Image"; // 🔧 수정됨
+
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -68,6 +73,7 @@ export default function ArticleSlider() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [articleStatuses, setArticleStatuses] = useState<Record<number, LearningStatus>>({});
 
   const visibleCount = 3;
 
@@ -83,11 +89,13 @@ export default function ArticleSlider() {
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const response = await fetch(url, { headers });
+
       if (!response.ok) {
         throw new Error('기사를 불러오는데 실패했습니다.');
       }
 
       const result: RecommendationResponse = await response.json();
+
       if (result.status !== 200) {
         throw new Error(result.message || '기사를 불러오는데 실패했습니다.');
       }
@@ -100,6 +108,36 @@ export default function ArticleSlider() {
       setLoading(false);
     }
   };
+
+
+  // ⭐ 기사별 학습 상태 가져오기
+  const fetchArticleStatus = async (newsId: number) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/news/status/${newsId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('학습 상태를 불러오는데 실패했습니다.');
+      }
+
+      const status = await response.text() as LearningStatus;
+      console.log(`기사 ID ${newsId}의 학습 상태:`, status);
+      setArticleStatuses(prev => ({
+        ...prev,
+        [newsId]: status
+      }));
+    } catch (error) {
+      console.error('학습 상태를 불러오는데 실패했습니다:', error);
+    }
+  };
+
+  // ⭐ 처음 컴포넌트 로딩 시 username 세팅
 
   useEffect(() => {
     const name = getUsernameFromToken();
@@ -120,6 +158,16 @@ export default function ArticleSlider() {
       fetchArticles();
     }
   }, [username]);
+
+  // ⭐ 기사 목록이 변경될 때마다 각 기사의 학습 상태 가져오기
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    articles.forEach(article => {
+      fetchArticleStatus(article.id);
+    });
+  }, [articles]);
 
   const handlePrev = () => {
     setStartIdx((prev) => Math.max(prev - 1, 0));
@@ -167,7 +215,7 @@ export default function ArticleSlider() {
 
       <Flex align="center" justify="center" mb={16}>
         <IconButton
-          aria-label="이전"
+          aria-label="이전" 
           icon={<ChevronLeftIcon boxSize={6} />}
           onClick={handlePrev}
           isDisabled={startIdx === 0}
@@ -186,6 +234,7 @@ export default function ArticleSlider() {
                 maxW="300px"
                 flex="1"
                 cursor="pointer"
+                position="relative"
                 _hover={{ transform: 'translateY(-4px)', transition: 'transform 0.2s' }}
               >
                 <Image
@@ -201,6 +250,33 @@ export default function ArticleSlider() {
                     target.src = DEFAULT_IMAGE;
                   }}
                 />
+                {articleStatuses[article.id] === 'completed' && (
+                  <Badge
+                    position="absolute"
+                    top={2}
+                    right={2}
+                    colorScheme="green"
+                    px={2}
+                    py={1}
+                    borderRadius="md"
+                  >
+                    학습 완료
+                  </Badge>
+                )}
+                {articleStatuses[article.id] === 'learning' && (
+                  <Badge
+                    position="absolute"
+                    top={4}
+                    left={4}
+                    colorScheme="yellow"
+                    px={3}
+                    py={2}
+                    borderRadius="md"
+                    fontSize="sm"
+                  >
+                    학습 중
+                  </Badge>
+                )}
                 <Flex direction="column" px={4} mb={6}>
                   <Flex justify="space-between" align="center" mb={2}>
                     <Text fontSize="sm" color="gray.500" fontWeight="medium">
