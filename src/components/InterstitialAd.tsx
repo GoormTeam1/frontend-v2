@@ -27,8 +27,8 @@ export default function InterstitialAd({ onClose }: InterstitialAdProps) {
   const [canClose, setCanClose] = useState(false);
   const [ad, setAd] = useState<AdData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasViewed, setHasViewed] = useState(false); // ✅ 조회수 중복 방지
 
-  // ✅ QUIZ_END + ACTIVE 광고 중 랜덤 선택
   useEffect(() => {
     const fetchAd = async () => {
       try {
@@ -46,7 +46,6 @@ export default function InterstitialAd({ onClose }: InterstitialAdProps) {
 
         const data = await res.json();
 
-        // ✅ QUIZ_END + ACTIVE 조건 필터링
         const validAds = data.filter(
           (item: any) => item.status === "ACTIVE" && item.type === "QUIZ_END"
         );
@@ -61,8 +60,10 @@ export default function InterstitialAd({ onClose }: InterstitialAdProps) {
           linkUrl: selected.linkUrl,
           title: selected.title,
         });
+
+        setHasViewed(false); // ✅ 새로운 광고 들어올 때 초기화
       } catch {
-        // 에러 무시
+        // silently fail
       } finally {
         setLoading(false);
       }
@@ -71,25 +72,31 @@ export default function InterstitialAd({ onClose }: InterstitialAdProps) {
     fetchAd();
   }, []);
 
-  // ✅ 광고 조회수 증가
+  // ✅ ad가 설정되고 hasViewed === false일 때만 조회수 증가
   useEffect(() => {
     const increaseViewCount = async () => {
-      if (!ad) return;
+      if (!ad || hasViewed) return;
+
       try {
         const token = localStorage.getItem("admin_token");
         if (!token) return;
+
         await fetch(`${API_BASE_URL}/admin/ads/${ad.id}/view`, {
           method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-      } catch {}
-    };
-    increaseViewCount();
-  }, [ad]);
 
-  // ⏱️ 카운트다운
+        setHasViewed(true);
+      } catch {
+        // silently fail
+      }
+    };
+
+    increaseViewCount();
+  }, [ad, hasViewed]);
+
   useEffect(() => {
     if (!ad) return;
 
@@ -119,7 +126,9 @@ export default function InterstitialAd({ onClose }: InterstitialAdProps) {
           Authorization: `Bearer ${token}`,
         },
       });
-    } catch {}
+    } catch {
+      // silently fail
+    }
 
     window.open(ad.linkUrl, "_blank");
   };
