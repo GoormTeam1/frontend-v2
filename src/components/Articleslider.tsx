@@ -33,7 +33,7 @@ interface DecodedToken {
   exp: number;
 }
 
-const DEFAULT_IMAGE = "https://via.placeholder.com/400x200?text=No+Image";
+const DEFAULT_IMAGE = "https://placehold.co/400x200?text=No+Image"; // 🔧 수정됨
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -43,7 +43,6 @@ const formatDate = (dateString: string) => {
   return `${year}.${month}.${day}`;
 };
 
-// ⭐ 토큰에서 username 가져오는 함수
 const getUsernameFromToken = (): string | null => {
   if (typeof window === "undefined") return null;
   const token = localStorage.getItem("token");
@@ -72,10 +71,9 @@ export default function ArticleSlider() {
 
   const visibleCount = 3;
 
-  // ⭐ 추천 기사 불러오기 함수
   const fetchArticles = async () => {
     try {
-      setLoading(true); // fetch 시작 시 로딩 true
+      setLoading(true);
       const token = localStorage.getItem('token');
       const url = token
         ? `${API_BASE_URL}/api/recommendation/search`
@@ -99,17 +97,15 @@ export default function ArticleSlider() {
       console.error('기사 데이터를 불러오는데 실패했습니다:', error);
       setError(error instanceof Error ? error.message : '데이터를 불러오는데 실패했습니다.');
     } finally {
-      setLoading(false); // fetch 끝나면 로딩 false
+      setLoading(false);
     }
   };
 
-  // ⭐ 처음 컴포넌트 로딩 시 username 세팅
   useEffect(() => {
     const name = getUsernameFromToken();
     setUsername(name);
   }, []);
 
-  // ⭐ 1초마다 토큰 변화 감지
   useEffect(() => {
     const interval = setInterval(() => {
       const name = getUsernameFromToken();
@@ -119,7 +115,6 @@ export default function ArticleSlider() {
     return () => clearInterval(interval);
   }, []);
 
-  // ⭐ username이 변할 때마다 추천 기사 다시 가져오기
   useEffect(() => {
     if (username !== undefined) {
       fetchArticles();
@@ -162,7 +157,6 @@ export default function ArticleSlider() {
 
   return (
     <Box>
-      {/* 로그인 여부에 따라 문구 출력 */}
       <Box textAlign="center" py={4}>
         <Text fontSize="2xl" fontWeight="bold">
           {username
@@ -171,7 +165,6 @@ export default function ArticleSlider() {
         </Text>
       </Box>
 
-      {/* 기사 슬라이더 */}
       <Flex align="center" justify="center" mb={16}>
         <IconButton
           aria-label="이전"
