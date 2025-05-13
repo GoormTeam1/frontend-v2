@@ -1,10 +1,7 @@
-'use client';
+import QuizPageClient from "./QuizPageClient";
+import { use } from "react";
 
-import { use } from 'react';
-import QuizPageClient from './QuizPageClient';
-
-export default function Page(props: { params: Promise<{ summaryId: string }> }) {
-  const { summaryId } = use(props.params);  // ✅ Promise 해제
-
+export default function Page({ params }: { params: Promise<{ summaryId: string }> }) {
+  const { summaryId } = use(params); // ✅ 서버에서 Promise 언랩
   return <QuizPageClient summaryId={summaryId} />;
 }

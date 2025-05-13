@@ -1,27 +1,30 @@
 "use client";
 
-import { Box, Heading, Flex, Button, Text, HStack, Tabs, TabList, Tab } from "@chakra-ui/react";
+import {
+  Box, Heading, Flex, Button, Text, HStack, Tabs, TabList, Tab,
+} from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { jwtDecode } from "jwt-decode";
 import Image from "next/image";
 
-
 interface DecodedToken {
-  sub: string;          // e.g. email or id
-  username?: string;    // 백엔드에서 claim 으로 넣어줬다면
+  sub: string;
+  username?: string;
   exp: number;
 }
 
 export default function Header() {
   const [formattedDate, setFormattedDate] = useState("");
   const [user, setUser] = useState<DecodedToken | null>(null);
+  const [mounted, setMounted] = useState(false); // ✅ hydration-safe
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    // 1) 날짜 세팅
+    setMounted(true);
+
     const today = new Date();
     const dateStr = today.toLocaleDateString("ko-KR", {
       year: "numeric",
@@ -31,14 +34,11 @@ export default function Header() {
     });
     setFormattedDate(dateStr);
 
-    // 2) 클라이언트 환경인지 확인 후 로컬스토리지 접근
-    if (typeof window === "undefined") return;
     const token = localStorage.getItem("token");
     if (!token) return;
 
     try {
       const decoded = jwtDecode<DecodedToken>(token);
-      // 만료 시간(exp)이 밀리초 단위인지 확인 후 비교
       if (decoded.exp * 1000 > Date.now()) {
         setUser(decoded);
       } else {
@@ -55,7 +55,6 @@ export default function Header() {
     setUser(null);
     router.refresh();
   };
-
 
   const handleTabChange = (index: number) => {
     switch (index) {
@@ -74,7 +73,7 @@ export default function Header() {
   const getTabIndex = () => {
     if (pathname === "/") return 0;
     if (pathname === "/mypage") return 1;
-    if (pathname === "/search") return 2;
+    if (pathname.startsWith("/search")) return 2;
     return 0;
   };
 
@@ -90,15 +89,14 @@ export default function Header() {
       w="100%"
     >
       <Flex align="center" justify="space-between" p={4} mt={8}>
-        {/* 왼쪽: 날짜 */}
         <Box>
-          {formattedDate && (
+          {mounted && formattedDate && (
             <Text fontSize="sm" color="black.700">
               {formattedDate}
             </Text>
           )}
         </Box>
-        {/* 가운데: 팀명 */}
+
         <Box flex="1" display="flex" justifyContent="center">
           <Link href="/">
             <Image
@@ -106,14 +104,13 @@ export default function Header() {
               alt="NeWordS Logo"
               width={100}
               height={1}
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: "pointer" }}
             />
           </Link>
         </Box>
 
-        {/* 오른쪽: 로그인 상태 */}
         <Box>
-          {user ? (
+          {mounted && user ? (
             <Flex align="center">
               <Text fontSize="sm" mr={3}>
                 {user.username ?? user.sub}님 환영합니다!
@@ -128,30 +125,30 @@ export default function Header() {
               </Button>
             </Flex>
           ) : (
-            <>
-              <Button
-                colorScheme="purple"
-                variant="ghost"
-                size="sm"
-                mr={2}
-                onClick={() => router.push("/login")}
-              >
-                로그인
-              </Button>
-              <Button
-                colorScheme="purple"
-                size="sm"
-                onClick={() => router.push("/signup")}
-              >
-                회원가입
-              </Button>
-            </>
+            mounted && (
+              <>
+                <Button
+                  colorScheme="purple"
+                  variant="ghost"
+                  size="sm"
+                  mr={2}
+                  onClick={() => router.push("/login")}
+                >
+                  로그인
+                </Button>
+                <Button
+                  colorScheme="purple"
+                  size="sm"
+                  onClick={() => router.push("/signup")}
+                >
+                  회원가입
+                </Button>
+              </>
+            )
           )}
         </Box>
       </Flex>
 
-
-      {/* 네비게이션 탭 */}
       <Tabs
         index={getTabIndex()}
         onChange={handleTabChange}
