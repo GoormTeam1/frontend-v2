@@ -53,7 +53,7 @@ export default function Header() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setUser(null);
-    router.push("/");
+    router.refresh();
   };
 
 

@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Box,
   Flex,
@@ -9,39 +10,31 @@ import {
 import { useState, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import Link from "next/link";
+import { jwtDecode } from "jwt-decode";
 import { API_BASE_URL } from '@/config/env';
 
-interface NewsArticle {
+interface RecommendedArticle {
   id: number;
   title: string;
-  summary: string;
-  category: string;
   image: string;
-  sourceLink: string;
+  category: string;
   publishedAt: string;
-  createAt: string;
 }
 
-interface NewsResponse {
-  content: NewsArticle[];
-  totalPages: number;
-  totalElements: number;
-  last: boolean;
-  first: boolean;
-  number: number;
-  size: number;
-  sort: Array<{
-    property: string;
-    direction: string;
-  }>;
-  numberOfElements: number;
-  empty: boolean;
+interface RecommendationResponse {
+  status: number;
+  message: string;
+  data: RecommendedArticle[];
 }
 
-// 기본 이미지 URL
+interface DecodedToken {
+  sub: string;
+  username?: string;
+  exp: number;
+}
+
 const DEFAULT_IMAGE = "https://via.placeholder.com/400x200?text=No+Image";
 
-// 날짜 포맷팅 함수
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   const year = date.getFullYear();
@@ -50,33 +43,88 @@ const formatDate = (dateString: string) => {
   return `${year}.${month}.${day}`;
 };
 
+// ⭐ 토큰에서 username 가져오는 함수
+const getUsernameFromToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+
+  try {
+    const decoded = jwtDecode<DecodedToken>(token);
+    if (decoded.exp * 1000 > Date.now()) {
+      return decoded.username || decoded.sub;
+    } else {
+      localStorage.removeItem("token");
+      return null;
+    }
+  } catch {
+    localStorage.removeItem("token");
+    return null;
+  }
+};
+
 export default function ArticleSlider() {
   const [startIdx, setStartIdx] = useState(0);
-  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [articles, setArticles] = useState<RecommendedArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+
   const visibleCount = 3;
 
-  useEffect(() => {
-    const fetchArticles = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/news`);
-        if (!response.ok) {
-          throw new Error('API 요청 실패');
-        }
-        const data: NewsResponse = await response.json();
-        console.log('API 응답:', data);
-        setArticles(data.content);
-      } catch (error) {
-        console.error('뉴스 데이터를 불러오는데 실패했습니다:', error);
-        setError('데이터를 불러오는데 실패했습니다.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // ⭐ 추천 기사 불러오기 함수
+  const fetchArticles = async () => {
+    try {
+      setLoading(true); // fetch 시작 시 로딩 true
+      const token = localStorage.getItem('token');
+      const url = token
+        ? `${API_BASE_URL}/api/recommendation/search`
+        : `${API_BASE_URL}/api/recommendation/search/default`;
 
-    fetchArticles();
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(url, { headers });
+      if (!response.ok) {
+        throw new Error('기사를 불러오는데 실패했습니다.');
+      }
+
+      const result: RecommendationResponse = await response.json();
+      if (result.status !== 200) {
+        throw new Error(result.message || '기사를 불러오는데 실패했습니다.');
+      }
+
+      setArticles(result.data);
+    } catch (error) {
+      console.error('기사 데이터를 불러오는데 실패했습니다:', error);
+      setError(error instanceof Error ? error.message : '데이터를 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false); // fetch 끝나면 로딩 false
+    }
+  };
+
+  // ⭐ 처음 컴포넌트 로딩 시 username 세팅
+  useEffect(() => {
+    const name = getUsernameFromToken();
+    setUsername(name);
   }, []);
+
+  // ⭐ 1초마다 토큰 변화 감지
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const name = getUsernameFromToken();
+      setUsername(name);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // ⭐ username이 변할 때마다 추천 기사 다시 가져오기
+  useEffect(() => {
+    if (username !== undefined) {
+      fetchArticles();
+    }
+  }, [username]);
 
   const handlePrev = () => {
     setStartIdx((prev) => Math.max(prev - 1, 0));
@@ -91,7 +139,7 @@ export default function ArticleSlider() {
   if (loading) {
     return (
       <Box textAlign="center" py={8}>
-        <Text>로딩 중...</Text>
+        <Text>추천 기사를 불러오는 중...</Text>
       </Box>
     );
   }
@@ -104,11 +152,26 @@ export default function ArticleSlider() {
     );
   }
 
+  if (articles.length === 0) {
+    return (
+      <Box textAlign="center" py={8}>
+        <Text>추천할 기사가 없습니다.</Text>
+      </Box>
+    );
+  }
+
   return (
     <Box>
-      <Text as="h1" fontSize="2xl" fontWeight="bold" mb={8} textAlign="center">
-        오늘의 학습 추천 기사
-      </Text>
+      {/* 로그인 여부에 따라 문구 출력 */}
+      <Box textAlign="center" py={4}>
+        <Text fontSize="2xl" fontWeight="bold">
+          {username
+            ? `${username}님을 위한 학습 추천 기사`
+            : "로그인하고 나만의 추천 기사를 받아보세요!"}
+        </Text>
+      </Box>
+
+      {/* 기사 슬라이더 */}
       <Flex align="center" justify="center" mb={16}>
         <IconButton
           aria-label="이전"
