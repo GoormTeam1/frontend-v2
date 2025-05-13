@@ -8,6 +8,7 @@ import ArticleSlider from "@/components/Articleslider";
 import CategoryNews from "@/components/CategoryNews";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
+import AdBanner from "@/components/AdBanner";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -32,6 +33,7 @@ export default function Home() {
         <CategoryNews />
       </Box>
       <Footer />
+      <AdBanner />
     </>
   );
 }

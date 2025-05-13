@@ -15,6 +15,7 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/env";
+import InterstitialAd from "@/components/InterstitialAd"; // ✅ 광고 컴포넌트
 
 interface QuizPageClientProps {
   summaryId: string;
@@ -58,6 +59,7 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [wrongSaved, setWrongSaved] = useState(false);
+  const [showAd, setShowAd] = useState(false); // ✅ 광고 상태
 
   const quiz = quizList[currentIndex];
 
@@ -72,13 +74,6 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
     if (currentIndex < quizList.length - 1) {
       setCurrentIndex(currentIndex + 1);
       resetState();
-    } else {
-      toast({
-        title: "모든 문제를 완료했습니다!",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
     }
   };
 
@@ -143,7 +138,7 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
 
     if (isRight) {
       toast({ title: "정답입니다!", status: "success", duration: 2000, isClosable: true });
-      setShowAnswer(true);
+      setShowAnswer(true); // ✅ 광고는 여기서 띄우지 않음
     } else {
       const newWrongCount = wrongCount + 1;
       setWrongCount(newWrongCount);
@@ -171,8 +166,10 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
           console.error("오답 저장 실패", err);
         }
       }
+
       if (newWrongCount >= 2) setCanRevealAnswer(true);
     }
+
     setTimeout(() => setIsSubmitting(false), 1500);
   };
 
@@ -266,10 +263,16 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
             </Button>
           </Flex>
         </form>
+
         {canRevealAnswer && !showAnswer && (
           <Flex justify="center" mt={4}>
             <Button
-              onClick={() => setShowAnswer(true)}
+              onClick={() => {
+                setShowAnswer(true);
+                if (currentIndex === quizList.length - 1) {
+                  setTimeout(() => setShowAd(true), 300); // ✅ 광고 여기서만
+                }
+              }}
               colorScheme="gray"
               variant="outline"
               size="md"
@@ -278,6 +281,7 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
             </Button>
           </Flex>
         )}
+
         {showAnswer && (
           <Box mt={8} p={6} bg="gray.50" borderRadius="md">
             <Text fontSize="lg" fontWeight="bold" color="green.500" mb={6}>
@@ -330,6 +334,12 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
         )}
       </Box>
       <Footer />
+
+      {showAd && (
+        <InterstitialAd
+          onClose={() => setShowAd(false)} 
+        />
+      )}
     </Box>
   );
 }
