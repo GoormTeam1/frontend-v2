@@ -34,11 +34,9 @@ interface DecodedToken {
   exp: number;
 }
 
-
 type LearningStatus = 'learning' | 'not_learning' | 'completed';
 
-const DEFAULT_IMAGE = "https://placehold.co/400x200?text=No+Image"; // 🔧 수정됨
-
+const DEFAULT_IMAGE = "https://placehold.co/400x200?text=No+Image";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -95,7 +93,6 @@ export default function ArticleSlider() {
       }
 
       const result: RecommendationResponse = await response.json();
-
       if (result.status !== 200) {
         throw new Error(result.message || '기사를 불러오는데 실패했습니다.');
       }
@@ -109,8 +106,6 @@ export default function ArticleSlider() {
     }
   };
 
-
-  // ⭐ 기사별 학습 상태 가져오기
   const fetchArticleStatus = async (newsId: number) => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -122,12 +117,9 @@ export default function ArticleSlider() {
         },
       });
 
-      if (!response.ok) {
-        throw new Error('학습 상태를 불러오는데 실패했습니다.');
-      }
+      if (!response.ok) throw new Error('학습 상태를 불러오는데 실패했습니다.');
 
       const status = await response.text() as LearningStatus;
-      console.log(`기사 ID ${newsId}의 학습 상태:`, status);
       setArticleStatuses(prev => ({
         ...prev,
         [newsId]: status
@@ -136,8 +128,6 @@ export default function ArticleSlider() {
       console.error('학습 상태를 불러오는데 실패했습니다:', error);
     }
   };
-
-  // ⭐ 처음 컴포넌트 로딩 시 username 세팅
 
   useEffect(() => {
     const name = getUsernameFromToken();
@@ -149,7 +139,6 @@ export default function ArticleSlider() {
       const name = getUsernameFromToken();
       setUsername(name);
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -159,7 +148,6 @@ export default function ArticleSlider() {
     }
   }, [username]);
 
-  // ⭐ 기사 목록이 변경될 때마다 각 기사의 학습 상태 가져오기
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -215,7 +203,7 @@ export default function ArticleSlider() {
 
       <Flex align="center" justify="center" mb={16}>
         <IconButton
-          aria-label="이전" 
+          aria-label="이전"
           icon={<ChevronLeftIcon boxSize={6} />}
           onClick={handlePrev}
           isDisabled={startIdx === 0}
@@ -243,19 +231,20 @@ export default function ArticleSlider() {
                   width="100%"
                   height="200px"
                   objectFit="cover"
-                  mb={4}
                   fallbackSrc={DEFAULT_IMAGE}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = DEFAULT_IMAGE;
                   }}
                 />
+                {/* ✅ 작고 간결한 뱃지 */}
                 {articleStatuses[article.id] === 'completed' && (
                   <Badge
                     position="absolute"
-                    top={2}
-                    right={2}
+                    top="8px"
+                    left="8px"
                     colorScheme="green"
+                    fontSize="xs"
                     px={2}
                     py={1}
                     borderRadius="md"
@@ -266,17 +255,18 @@ export default function ArticleSlider() {
                 {articleStatuses[article.id] === 'learning' && (
                   <Badge
                     position="absolute"
-                    top={4}
-                    left={4}
+                    top="8px"
+                    left="8px"
                     colorScheme="yellow"
-                    px={3}
-                    py={2}
+                    fontSize="xs"
+                    px={2}
+                    py={1}
                     borderRadius="md"
-                    fontSize="sm"
                   >
                     학습 중
                   </Badge>
                 )}
+
                 <Flex direction="column" px={4} mb={6}>
                   <Flex justify="space-between" align="center" mb={2}>
                     <Text fontSize="sm" color="gray.500" fontWeight="medium">

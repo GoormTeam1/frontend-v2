@@ -17,10 +17,11 @@ import {
   TabPanels,
   TabPanel,
   IconButton,
+  Badge,
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
-import { API_BASE_URL } from '@/config/env';
+import { API_BASE_URL } from "@/config/env";
 import Link from "next/link";
 
 interface NewsArticle {
@@ -28,10 +29,10 @@ interface NewsArticle {
   title: string;
   summary: string;
   category: string;
-  image: string;
-  sourceLink: string;
-  publishedAt: string;
-  createAt: string;
+  image?: string;
+  sourceLink?: string;
+  publishedAt?: string;
+  createAt?: string;
 }
 
 interface NewsResponse {
@@ -45,6 +46,7 @@ interface NewsResponse {
 }
 
 type SortOrder = "latest" | "oldest";
+type LearningStatus = "learning" | "not_learning" | "completed";
 
 const CATEGORIES = [
   { id: "us", label: "US" },
@@ -63,12 +65,13 @@ const CATEGORIES = [
 
 const ITEMS_PER_PAGE = 6;
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString?: string) => {
+  if (!dateString) return "";
   const date = new Date(dateString);
-  return date.toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 };
 
@@ -76,6 +79,7 @@ export default function CategoryNews() {
   const [mounted, setMounted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].id);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [articleStatuses, setArticleStatuses] = useState<Record<number, LearningStatus>>({});
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -102,6 +106,28 @@ export default function CategoryNews() {
         const data: NewsResponse = await response.json();
         setArticles(data.content || []);
         setTotalPages(data.totalPages);
+
+        // 각 article의 status 병렬 호출
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const statuses: Record<number, LearningStatus> = {};
+        await Promise.all(
+          data.content.map(async (article) => {
+            try {
+              const res = await fetch(`${API_BASE_URL}/api/news/status/${article.id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (!res.ok) return;
+              const statusText = await res.text();
+              const status = statusText.trim().toLowerCase() as LearningStatus;
+              statuses[article.id] = status;
+            } catch {
+              // skip
+            }
+          })
+        );
+        setArticleStatuses(statuses);
       } catch (error) {
         toast({
           title: "데이터를 불러오는데 실패했습니다",
@@ -119,7 +145,7 @@ export default function CategoryNews() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -133,10 +159,10 @@ export default function CategoryNews() {
     setCurrentPage(0);
   };
 
-  const handleTabPageChange = (direction: 'prev' | 'next') => {
-    if (direction === 'prev' && currentTabPage > 0) {
+  const handleTabPageChange = (direction: "prev" | "next") => {
+    if (direction === "prev" && currentTabPage > 0) {
       setCurrentTabPage(currentTabPage - 1);
-    } else if (direction === 'next' && currentTabPage < Math.ceil(CATEGORIES.length / ITEMS_PER_PAGE) - 1) {
+    } else if (direction === "next" && currentTabPage < Math.ceil(CATEGORIES.length / ITEMS_PER_PAGE) - 1) {
       setCurrentTabPage(currentTabPage + 1);
     }
   };
@@ -164,7 +190,7 @@ export default function CategoryNews() {
           <IconButton
             aria-label="Previous categories"
             icon={<ChevronLeftIcon />}
-            onClick={() => handleTabPageChange('prev')}
+            onClick={() => handleTabPageChange("prev")}
             isDisabled={currentTabPage === 0}
             mr={2}
           />
@@ -182,7 +208,7 @@ export default function CategoryNews() {
           <IconButton
             aria-label="Next categories"
             icon={<ChevronRightIcon />}
-            onClick={() => handleTabPageChange('next')}
+            onClick={() => handleTabPageChange("next")}
             isDisabled={currentTabPage >= Math.ceil(CATEGORIES.length / ITEMS_PER_PAGE) - 1}
             ml={2}
           />
@@ -229,17 +255,47 @@ export default function CategoryNews() {
                           borderRadius="md"
                           overflow="hidden"
                           boxShadow="md"
+                          position="relative"
                           _hover={{ transform: "translateY(-2px)", transition: "transform 0.2s" }}
                         >
+                          {articleStatuses[article.id] === "learning" && (
+                            <Badge
+                              position="absolute"
+                              top={2}
+                              left={2}
+                              colorScheme="yellow"
+                              fontSize="xs"
+                              px={2}
+                              py={1}
+                              borderRadius="md"
+                              zIndex={1}
+                            >
+                              학습 중
+                            </Badge>
+                          )}
+                          {articleStatuses[article.id] === "completed" && (
+                            <Badge
+                              position="absolute"
+                              top={2}
+                              right={2}
+                              colorScheme="green"
+                              fontSize="xs"
+                              px={2}
+                              py={1}
+                              borderRadius="md"
+                              zIndex={1}
+                            >
+                              학습 완료
+                            </Badge>
+                          )}
                           <Flex p={4}>
                             <Image
-                              src={article.image}
+                              src={article.image || "https://placehold.co/400x200?text=No+Image"}
                               alt={article.title}
                               width="250px"
                               height="200px"
                               objectFit="cover"
                               onError={handleImageError}
-                              fallbackSrc="https://placehold.co/400x200?text=No+Image"
                             />
                             <Box p={4} flex="1">
                               <Flex direction="column" height="100%" justify="space-between">
