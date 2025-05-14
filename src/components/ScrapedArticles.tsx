@@ -8,6 +8,7 @@ import {
   Image,
   Spinner,
   useToast,
+  Badge,
 } from "@chakra-ui/react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import { useEffect, useState } from "react";
@@ -29,6 +30,8 @@ interface NewsArticle {
   publishedAt: string;
 }
 
+type LearningStatus = "learning" | "not_learning" | "completed";
+
 const DEFAULT_IMAGE = "https://via.placeholder.com/400x200?text=No+Image";
 
 const formatDate = (dateString: string) => {
@@ -39,17 +42,40 @@ const formatDate = (dateString: string) => {
 export default function ScrapedArticlesSlider() {
   const [scraps, setScraps] = useState<ScrapedItem[]>([]);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [articleStatuses, setArticleStatuses] = useState<Record<number, LearningStatus>>({});
   const [loading, setLoading] = useState(true);
   const [startIdx, setStartIdx] = useState(0);
   const visibleCount = 3;
   const toast = useToast();
+
+  const fetchLearningStatus = async (newsId: number) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE_URL}/api/news/status/${newsId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("학습 상태 조회 실패");
+
+      const status = await res.text() as LearningStatus;
+
+      setArticleStatuses((prev) => ({
+        ...prev,
+        [newsId]: status,
+      }));
+    } catch {
+      // silently fail
+    }
+  };
 
   useEffect(() => {
     const fetchScrapData = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          setLoading(false); // ✅ 조용히 실패 처리
+          setLoading(false);
           return;
         }
 
@@ -88,6 +114,10 @@ export default function ScrapedArticlesSlider() {
           )
         );
         setArticles(results);
+
+        results.forEach((article) => {
+          fetchLearningStatus(article.id);
+        });
       } catch {
         toast({
           title: "기사 정보 오류",
@@ -152,6 +182,7 @@ export default function ScrapedArticlesSlider() {
                 maxW="300px"
                 flex="1"
                 cursor="pointer"
+                position="relative"
                 _hover={{ transform: "translateY(-4px)", transition: "transform 0.2s" }}
               >
                 <Image
@@ -162,6 +193,37 @@ export default function ScrapedArticlesSlider() {
                   objectFit="cover"
                   fallbackSrc={DEFAULT_IMAGE}
                 />
+
+                {/* ✅ 작고 간결한 뱃지 위치 및 스타일 */}
+                {articleStatuses[article.id] === "completed" && (
+                  <Badge
+                    position="absolute"
+                    top="8px"
+                    left="8px"
+                    colorScheme="green"
+                    fontSize="xs"
+                    px={2}
+                    py={1}
+                    borderRadius="md"
+                  >
+                    학습 완료
+                  </Badge>
+                )}
+                {articleStatuses[article.id] === "learning" && (
+                  <Badge
+                    position="absolute"
+                    top="8px"
+                    left="8px"
+                    colorScheme="yellow"
+                    fontSize="xs"
+                    px={2}
+                    py={1}
+                    borderRadius="md"
+                  >
+                    학습 중
+                  </Badge>
+                )}
+
                 <Box px={4} py={3}>
                   <Flex justify="space-between" mb={1}>
                     <Text fontSize="sm" color="gray.500">{article.category}</Text>

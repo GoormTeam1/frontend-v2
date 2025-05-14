@@ -15,19 +15,15 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/config/env";
 import Link from "next/link";
 
-interface WrongSummary {
+interface WrongQuizArticle {
   summaryId: number;
-  userEmail: string;
-}
-
-interface NewsArticle {
-  id: number;
+  newsId: number;
   title: string;
   image: string;
   category: string;
   publishedAt: string;
-  level?: "상" | "중" | "하";
-  summaryId: number;
+  level: "상" | "중" | "하";
+  status: "learning" | "completed" | "not_learning";
 }
 
 const DEFAULT_IMAGE = "https://via.placeholder.com/400x200?text=No+Image";
@@ -51,21 +47,16 @@ const getBadgeColor = (level: string) => {
 };
 
 export default function WrongQuizArticles() {
-  const [wrongSummaries, setWrongSummaries] = useState<WrongSummary[]>([]);
-  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [articles, setArticles] = useState<WrongQuizArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [startIdx, setStartIdx] = useState(0);
   const visibleCount = 3;
   const toast = useToast();
 
   useEffect(() => {
-    const fetchWrongSummaries = async () => {
+    const fetchWrongArticles = async () => {
       const token = localStorage.getItem("token");
-
-      if (!token) {
-        setLoading(false); // ✅ 조용히 실패 처리
-        return;
-      }
+      if (!token) return setLoading(false);
 
       try {
         const res = await fetch(`${API_BASE_URL}/api/quiz/wrong`, {
@@ -74,59 +65,19 @@ export default function WrongQuizArticles() {
           },
         });
 
-        const data: WrongSummary[] = await res.json();
-        setWrongSummaries(data);
+        if (!res.ok) throw new Error("오답 기사 목록 불러오기 실패");
+
+        const data: WrongQuizArticle[] = await res.json();
+
+        // ✅ 학습 중인 것만 필터링
+        const learningArticles = data.filter(article => article.status === "learning");
+
+        setArticles(learningArticles);
+        setStartIdx(0);
       } catch (err: any) {
         toast({
-          title: "오답 데이터 오류",
-          description: err.message,
-          status: "error",
-          duration: 3000,
-          isClosable: true,
-        });
-        setLoading(false);
-      }
-    };
-
-    fetchWrongSummaries();
-  }, []);
-
-  useEffect(() => {
-    const fetchArticles = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setLoading(false); // ✅ 여기서도 방어 처리
-          return;
-        }
-
-        const fetched: NewsArticle[] = [];
-
-        for (const item of wrongSummaries) {
-          const searchRes = await fetch(`${API_BASE_URL}/api/summary/search/${item.summaryId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (!searchRes.ok) continue;
-          const summaryData = await searchRes.json();
-          const newsId = summaryData.newsId;
-          const level = summaryData.level;
-
-          const res = await fetch(`${API_BASE_URL}/api/news/${newsId}`);
-          if (!res.ok) continue;
-
-          const news = await res.json();
-          fetched.push({ ...news, level, summaryId: item.summaryId });
-        }
-
-        setArticles(fetched);
-        setStartIdx(0);
-      } catch {
-        toast({
-          title: "뉴스 로딩 실패",
-          description: "기사 정보를 불러오지 못했습니다.",
+          title: "데이터 오류",
+          description: err.message || "오답 기사 데이터를 불러오지 못했습니다.",
           status: "error",
           duration: 3000,
           isClosable: true,
@@ -136,9 +87,8 @@ export default function WrongQuizArticles() {
       }
     };
 
-    if (wrongSummaries.length > 0) fetchArticles();
-    else setLoading(false);
-  }, [wrongSummaries]);
+    fetchWrongArticles();
+  }, []);
 
   const handlePrev = () => setStartIdx((prev) => Math.max(prev - visibleCount, 0));
   const handleNext = () =>
@@ -159,7 +109,7 @@ export default function WrongQuizArticles() {
   if (articles.length === 0) {
     return (
       <Box textAlign="center" py={12}>
-        <Text color="gray.500">틀린 문제가 포함된 기사가 없습니다.</Text>
+        <Text color="gray.500">학습 중인 오답 기사가 없습니다.</Text>
       </Box>
     );
   }
@@ -178,7 +128,7 @@ export default function WrongQuizArticles() {
         <Flex gap={6}>
           {visibleArticles.map((article) => (
             <Link
-              key={`${article.summaryId}-${article.level}`}
+              key={`${article.summaryId}-${article.newsId}`}
               href={`/quiz/${article.summaryId}`}
               passHref
             >
@@ -204,15 +154,11 @@ export default function WrongQuizArticles() {
                 />
                 <Box px={4} py={3}>
                   <Flex justify="space-between" mb={1}>
-                    <Text fontSize="sm" color="gray.500">{article.category}</Text>
+                    <Badge colorScheme={getBadgeColor(article.level)}>{article.level}</Badge>
                     <Text fontSize="xs" color="gray.400">{formatDate(article.publishedAt)}</Text>
                   </Flex>
                   <Text fontWeight="semibold" noOfLines={3}>{article.title}</Text>
-                  {article.level && (
-                    <Badge mt={2} colorScheme={getBadgeColor(article.level)}>
-                      {article.level}
-                    </Badge>
-                  )}
+                  <Badge mt={2} colorScheme="yellow">학습 중</Badge>
                 </Box>
               </Box>
             </Link>

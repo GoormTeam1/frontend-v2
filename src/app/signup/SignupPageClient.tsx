@@ -10,20 +10,19 @@ import axios from "axios";
 import Footer from "../../components/Footer";
 import { API_BASE_URL } from "@/config/env";
 
-// 카테고리 옵션
 const categoryOptions = [
-  { label: "경제", value: "Business" },
-  { label: "문화", value: "Entertainment" },
-  { label: "과학", value: "Science" },
-  { label: "세계", value: "World" },
-  { label: "정치", value: "Pollitics" },
-  { label: "건강", value: "Heallth" },
-  { label: "기후", value: "Climate" },
-  { label: "날씨", value: "Weather" },
-  { label: "여행", value: "Travel" },
-  { label: "스타일", value: "Style" },
-  { label: "스포츠", value: "Sports" },
-  { label: "미국", value: "US" },
+  { label: "경제", value: "business" },
+  { label: "문화", value: "entertainment" },
+  { label: "과학", value: "science" },
+  { label: "세계", value: "world" },
+  { label: "정치", value: "politics" },
+  { label: "건강", value: "health" },
+  { label: "기후", value: "climate" },
+  { label: "날씨", value: "weather" },
+  { label: "여행", value: "travel" },
+  { label: "스타일", value: "style" },
+  { label: "스포츠", value: "sports" },
+  { label: "미국", value: "us" },
 ];
 
 const levels = ["상", "중", "하"];
@@ -96,11 +95,12 @@ export default function SignupPageClient() {
           email,
           password,
           username: name,
-          gender,
+          gender, // "남자" 또는 "여자"
           level,
           birthDate: new Date(birthDate).toISOString(),
           categoryList: selectedCategories,
         };
+
         console.log("✅ 회원가입 payload:", payload);
 
         await axios.post(`${API_BASE_URL}/api/user/signup`, payload, {
