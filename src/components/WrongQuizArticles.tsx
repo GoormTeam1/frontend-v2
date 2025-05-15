@@ -8,7 +8,6 @@ import {
   Image,
   Spinner,
   useToast,
-  Badge,
 } from "@chakra-ui/react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import { useEffect, useState } from "react";
@@ -31,19 +30,6 @@ const DEFAULT_IMAGE = "https://via.placeholder.com/400x200?text=No+Image";
 const formatDate = (date: string) => {
   const d = new Date(date);
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
-};
-
-const getBadgeColor = (level: string) => {
-  switch (level) {
-    case "상":
-      return "red";
-    case "중":
-      return "yellow";
-    case "하":
-      return "blue";
-    default:
-      return "gray";
-  }
 };
 
 export default function WrongQuizArticles() {
@@ -69,7 +55,7 @@ export default function WrongQuizArticles() {
 
         const data: WrongQuizArticle[] = await res.json();
 
-        // ✅ 학습 중인 것만 필터링
+        // 학습 중인 것만 필터링
         const learningArticles = data.filter(article => article.status === "learning");
 
         setArticles(learningArticles);
@@ -154,11 +140,14 @@ export default function WrongQuizArticles() {
                 />
                 <Box px={4} py={3}>
                   <Flex justify="space-between" mb={1}>
-                    <Badge colorScheme={getBadgeColor(article.level)}>{article.level}</Badge>
-                    <Text fontSize="xs" color="gray.400">{formatDate(article.publishedAt)}</Text>
+                    <Text fontSize="sm" fontWeight="bold" color="gray.600">
+                      {article.level}
+                    </Text>
+                    <Text fontSize="xs" color="gray.400">
+                      {formatDate(article.publishedAt)}
+                    </Text>
                   </Flex>
                   <Text fontWeight="semibold" noOfLines={3}>{article.title}</Text>
-                  <Badge mt={2} colorScheme="yellow">학습 중</Badge>
                 </Box>
               </Box>
             </Link>

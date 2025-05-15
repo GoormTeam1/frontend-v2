@@ -12,8 +12,6 @@ import {
   Button,
   ButtonGroup,
   Select,
-  HStack,
-  Badge,
 } from "@chakra-ui/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -44,13 +42,11 @@ interface SearchResponse {
 }
 
 type SortOrder = "latest" | "oldest";
-type LearningStatus = "learning" | "completed" | "not_learning";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const keyword = searchParams.get("keyword");
   const [articles, setArticles] = useState<NewsArticle[]>([]);
-  const [articleStatuses, setArticleStatuses] = useState<Record<number, LearningStatus>>({});
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -74,22 +70,6 @@ export default function SearchPage() {
         const data: SearchResponse = await response.json();
         setArticles(data.content || []);
         setTotalPages(data.totalPages);
-
-        data.content.forEach(async (article) => {
-          try {
-            const token = localStorage.getItem("token");
-            if (!token) return;
-            const res = await fetch(`${API_BASE_URL}/api/news/status/${article.id}`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-            if (res.ok) {
-              const status = await res.text();
-              setArticleStatuses((prev) => ({ ...prev, [article.id]: status as LearningStatus }));
-            }
-          } catch {}
-        });
       } catch (error) {
         toast({
           title: "검색 중 오류가 발생했습니다",
@@ -239,7 +219,6 @@ export default function SearchPage() {
                     overflow="hidden"
                     boxShadow="md"
                     _hover={{ transform: "translateY(-4px)", transition: "transform 0.2s" }}
-                    position="relative"
                   >
                     <Image
                       src={article.image}
@@ -248,32 +227,6 @@ export default function SearchPage() {
                       height="200px"
                       objectFit="cover"
                     />
-                    {articleStatuses[article.id] === "completed" && (
-                      <Badge
-                        position="absolute"
-                        top={2}
-                        right={2}
-                        colorScheme="green"
-                        px={2}
-                        py={1}
-                        borderRadius="md"
-                      >
-                        학습 완료
-                      </Badge>
-                    )}
-                    {articleStatuses[article.id] === "learning" && (
-                      <Badge
-                        position="absolute"
-                        top={2}
-                        left={2}
-                        colorScheme="yellow"
-                        px={2}
-                        py={1}
-                        borderRadius="md"
-                      >
-                        학습 중
-                      </Badge>
-                    )}
                     <Box p={4}>
                       <Flex justify="space-between" mb={2}>
                         <Text fontSize="sm" color="gray.500">{article.category}</Text>
