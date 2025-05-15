@@ -17,7 +17,6 @@ import {
   TabPanels,
   TabPanel,
   IconButton,
-  Badge,
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
@@ -46,7 +45,6 @@ interface NewsResponse {
 }
 
 type SortOrder = "latest" | "oldest";
-type LearningStatus = "learning" | "not_learning" | "completed";
 
 const CATEGORIES = [
   { id: "us", label: "US" },
@@ -79,7 +77,6 @@ export default function CategoryNews() {
   const [mounted, setMounted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].id);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
-  const [articleStatuses, setArticleStatuses] = useState<Record<number, LearningStatus>>({});
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -99,35 +96,11 @@ export default function CategoryNews() {
           `${API_BASE_URL}/api/news/category/${selectedCategory}?page=${currentPage}&size=9&sort=publishedAt,${sortOrder === "latest" ? "desc" : "asc"}`
         );
 
-        if (!response.ok) {
-          throw new Error("카테고리 뉴스를 불러오는데 실패했습니다.");
-        }
+        if (!response.ok) throw new Error("카테고리 뉴스를 불러오는데 실패했습니다.");
 
         const data: NewsResponse = await response.json();
         setArticles(data.content || []);
         setTotalPages(data.totalPages);
-
-        // 각 article의 status 병렬 호출
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        const statuses: Record<number, LearningStatus> = {};
-        await Promise.all(
-          data.content.map(async (article) => {
-            try {
-              const res = await fetch(`${API_BASE_URL}/api/news/status/${article.id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              if (!res.ok) return;
-              const statusText = await res.text();
-              const status = statusText.trim().toLowerCase() as LearningStatus;
-              statuses[article.id] = status;
-            } catch {
-              // skip
-            }
-          })
-        );
-        setArticleStatuses(statuses);
       } catch (error) {
         toast({
           title: "데이터를 불러오는데 실패했습니다",
@@ -255,39 +228,8 @@ export default function CategoryNews() {
                           borderRadius="md"
                           overflow="hidden"
                           boxShadow="md"
-                          position="relative"
                           _hover={{ transform: "translateY(-2px)", transition: "transform 0.2s" }}
                         >
-                          {articleStatuses[article.id] === "learning" && (
-                            <Badge
-                              position="absolute"
-                              top={2}
-                              left={2}
-                              colorScheme="yellow"
-                              fontSize="xs"
-                              px={2}
-                              py={1}
-                              borderRadius="md"
-                              zIndex={1}
-                            >
-                              학습 중
-                            </Badge>
-                          )}
-                          {articleStatuses[article.id] === "completed" && (
-                            <Badge
-                              position="absolute"
-                              top={2}
-                              right={2}
-                              colorScheme="green"
-                              fontSize="xs"
-                              px={2}
-                              py={1}
-                              borderRadius="md"
-                              zIndex={1}
-                            >
-                              학습 완료
-                            </Badge>
-                          )}
                           <Flex p={4}>
                             <Image
                               src={article.image || "https://placehold.co/400x200?text=No+Image"}

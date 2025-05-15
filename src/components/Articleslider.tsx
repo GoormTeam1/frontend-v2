@@ -6,7 +6,6 @@ import {
   Image,
   Text,
   IconButton,
-  Badge,
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
@@ -33,8 +32,6 @@ interface DecodedToken {
   username?: string;
   exp: number;
 }
-
-type LearningStatus = 'learning' | 'not_learning' | 'completed';
 
 const DEFAULT_IMAGE = "https://placehold.co/400x200?text=No+Image";
 
@@ -71,7 +68,6 @@ export default function ArticleSlider() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
-  const [articleStatuses, setArticleStatuses] = useState<Record<number, LearningStatus>>({});
 
   const visibleCount = 3;
 
@@ -106,29 +102,6 @@ export default function ArticleSlider() {
     }
   };
 
-  const fetchArticleStatus = async (newsId: number) => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/news/status/${newsId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error('학습 상태를 불러오는데 실패했습니다.');
-
-      const status = await response.text() as LearningStatus;
-      setArticleStatuses(prev => ({
-        ...prev,
-        [newsId]: status
-      }));
-    } catch (error) {
-      console.error('학습 상태를 불러오는데 실패했습니다:', error);
-    }
-  };
-
   useEffect(() => {
     const name = getUsernameFromToken();
     setUsername(name);
@@ -147,15 +120,6 @@ export default function ArticleSlider() {
       fetchArticles();
     }
   }, [username]);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    articles.forEach(article => {
-      fetchArticleStatus(article.id);
-    });
-  }, [articles]);
 
   const handlePrev = () => {
     setStartIdx((prev) => Math.max(prev - 1, 0));
@@ -237,36 +201,6 @@ export default function ArticleSlider() {
                     target.src = DEFAULT_IMAGE;
                   }}
                 />
-                {/* ✅ 작고 간결한 뱃지 */}
-                {articleStatuses[article.id] === 'completed' && (
-                  <Badge
-                    position="absolute"
-                    top="8px"
-                    left="8px"
-                    colorScheme="green"
-                    fontSize="xs"
-                    px={2}
-                    py={1}
-                    borderRadius="md"
-                  >
-                    학습 완료
-                  </Badge>
-                )}
-                {articleStatuses[article.id] === 'learning' && (
-                  <Badge
-                    position="absolute"
-                    top="8px"
-                    left="8px"
-                    colorScheme="yellow"
-                    fontSize="xs"
-                    px={2}
-                    py={1}
-                    borderRadius="md"
-                  >
-                    학습 중
-                  </Badge>
-                )}
-
                 <Flex direction="column" px={4} mb={6}>
                   <Flex justify="space-between" align="center" mb={2}>
                     <Text fontSize="sm" color="gray.500" fontWeight="medium">
