@@ -15,7 +15,7 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/env";
-import InterstitialAd from "@/components/InterstitialAd"; // ✅ 광고 컴포넌트
+import InterstitialAd from "@/components/InterstitialAd";
 
 interface QuizPageClientProps {
   summaryId: string;
@@ -39,8 +39,7 @@ function getEmailFromToken(token: string | null): string | null {
     const payloadBase64 = token.split(".")[1];
     const decodedPayload = JSON.parse(atob(payloadBase64));
     return decodedPayload.sub || decodedPayload.email || null;
-  } catch (err) {
-    console.error("JWT 디코딩 실패:", err);
+  } catch {
     return null;
   }
 }
@@ -50,6 +49,7 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
   const toast = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
   const [quizList, setQuizList] = useState<QuizData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -59,7 +59,7 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [wrongSaved, setWrongSaved] = useState(false);
-  const [showAd, setShowAd] = useState(false); // ✅ 광고 상태
+  const [showAd, setShowAd] = useState(false);
 
   const quiz = quizList[currentIndex];
 
@@ -138,7 +138,7 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
 
     if (isRight) {
       toast({ title: "정답입니다!", status: "success", duration: 2000, isClosable: true });
-      setShowAnswer(true); // ✅ 광고는 여기서 띄우지 않음
+      setShowAnswer(true);
     } else {
       const newWrongCount = wrongCount + 1;
       setWrongCount(newWrongCount);
@@ -162,9 +162,7 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
             });
             setWrongSaved(true);
           }
-        } catch (err) {
-          console.error("오답 저장 실패", err);
-        }
+        } catch {}
       }
 
       if (newWrongCount >= 2) setCanRevealAnswer(true);
@@ -177,21 +175,15 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
     try {
       const token = localStorage.getItem("token");
       const email = getEmailFromToken(token);
-  
       if (email) {
-        await axios.patch(
-          `${API_BASE_URL}/api/quiz/wrong/${summaryIdNumber}`,
-          {
-            status: "completed", // PATCH 요청의 데이터
+        await axios.patch(`${API_BASE_URL}/api/quiz/wrong/${summaryIdNumber}`, {
+          status: "completed",
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "X-User-Email": email,
           },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "X-User-Email": email,
-            },
-          }
-        );
-  
+        });
         toast({
           title: "오답 상태가 완료로 변경되었습니다.",
           status: "info",
@@ -199,8 +191,7 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
           isClosable: true,
         });
       }
-    } catch (err) {
-      console.error("오답 상태 변경 실패", err);
+    } catch {
       toast({
         title: "오답 상태 변경 실패",
         status: "error",
@@ -208,7 +199,7 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
       });
     }
   };
-  
+
   if (isLoading) {
     return (
       <Box minH="100vh">
@@ -282,7 +273,7 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
               onClick={() => {
                 setShowAnswer(true);
                 if (currentIndex === quizList.length - 1) {
-                  setTimeout(() => setShowAd(true), 300); // ✅ 광고 여기서만
+                  setTimeout(() => setShowAd(true), 300);
                 }
               }}
               colorScheme="gray"
@@ -346,11 +337,8 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
         )}
       </Box>
       <Footer />
-
       {showAd && (
-        <InterstitialAd
-          onClose={() => setShowAd(false)} 
-        />
+        <InterstitialAd onClose={() => setShowAd(false)} />
       )}
     </Box>
   );
