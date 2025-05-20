@@ -1,6 +1,15 @@
-import { Box, Heading, Text, Button, Stack, Image, SimpleGrid, Icon } from "@chakra-ui/react";
-import Link from "next/link";
+"use client";
+
+import {
+  Box,
+  Heading,
+  Text,
+  Stack,
+  SimpleGrid,
+  Icon,
+} from "@chakra-ui/react";
 import { FaNewspaper, FaBookOpen, FaGraduationCap } from "react-icons/fa";
+import { IconType } from "react-icons";
 
 export default function Hero() {
   return (
@@ -74,13 +83,20 @@ export default function Hero() {
             description="Personalized learning path based on your level"
           />
         </SimpleGrid>
-
       </Stack>
     </Box>
   );
 }
 
-function FeatureCard({ icon, title, description }: { icon: any; title: string; description: string }) {
+function FeatureCard({
+  icon,
+  title,
+  description,
+}: {
+  icon: IconType;
+  title: string;
+  description: string;
+}) {
   return (
     <Box
       p={4}
@@ -94,7 +110,9 @@ function FeatureCard({ icon, title, description }: { icon: any; title: string; d
       <Heading as="h3" size="sm" mb={1} color="gray.800">
         {title}
       </Heading>
-      <Text fontSize="sm" color="gray.600">{description}</Text>
+      <Text fontSize="sm" color="gray.600">
+        {description}
+      </Text>
     </Box>
   );
 }

@@ -18,6 +18,15 @@ interface AdData {
   title: string;
 }
 
+interface RawAd {
+  id: number;
+  imageUrl: string;
+  linkUrl: string;
+  title: string;
+  status: string;
+  type: string;
+}
+
 interface InterstitialAdProps {
   onClose: () => void;
 }
@@ -44,10 +53,10 @@ export default function InterstitialAd({ onClose }: InterstitialAdProps) {
 
         if (!res.ok) throw new Error("광고 데이터 조회 실패");
 
-        const data = await res.json();
+        const data: RawAd[] = await res.json();
 
         const validAds = data.filter(
-          (item: any) => item.status === "ACTIVE" && item.type === "QUIZ_END"
+          (item: RawAd) => item.status === "ACTIVE" && item.type === "QUIZ_END"
         );
         if (validAds.length === 0) return;
 

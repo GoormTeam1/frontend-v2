@@ -11,7 +11,7 @@ import {
   Flex,
   useToast,
 } from "@chakra-ui/react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/config/env";
@@ -63,29 +63,29 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
 
   const quiz = quizList[currentIndex];
 
-  const handlePrevQuiz = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-      resetState();
-    }
-  };
-
-  const handleNextQuiz = () => {
-    if (currentIndex < quizList.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-      resetState();
-    }
-  };
-
-  const resetState = () => {
+  const resetState = useCallback(() => {
     setAnswer("");
     setWrongCount(0);
     setShowAnswer(false);
     setCanRevealAnswer(false);
     setWrongSaved(false);
-  };
+  }, []);
 
-  const fetchQuizList = async () => {
+  const handlePrevQuiz = useCallback(() => {
+    if (currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+      resetState();
+    }
+  }, [currentIndex, resetState]);
+
+  const handleNextQuiz = useCallback(() => {
+    if (currentIndex < quizList.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+      resetState();
+    }
+  }, [currentIndex, quizList.length, resetState]);
+
+  const fetchQuizList = useCallback(async () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -104,31 +104,13 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [summaryIdNumber, toast]);
 
   useEffect(() => {
     fetchQuizList();
-  }, [summaryId]);
+  }, [fetchQuizList]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        if (showAnswer) handleNextQuiz();
-        else if (answer.trim()) handleSubmit();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showAnswer, answer]);
-
-  useEffect(() => {
-    if (!isLoading && !showAnswer && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isLoading, showAnswer]);
-
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!quiz || isSubmitting) return;
     setIsSubmitting(true);
 
@@ -169,7 +151,25 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
     }
 
     setTimeout(() => setIsSubmitting(false), 1500);
-  };
+  }, [answer, quiz, wrongCount, isSubmitting, summaryIdNumber, toast, wrongSaved]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        if (showAnswer) handleNextQuiz();
+        else if (answer.trim()) handleSubmit();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showAnswer, answer, handleNextQuiz, handleSubmit]);
+
+  useEffect(() => {
+    if (!isLoading && !showAnswer && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isLoading, showAnswer]);
 
   const handleChangeWrongQuiz = async () => {
     try {
@@ -337,9 +337,7 @@ export default function QuizPageClient({ summaryId }: QuizPageClientProps) {
         )}
       </Box>
       <Footer />
-      {showAd && (
-        <InterstitialAd onClose={() => setShowAd(false)} />
-      )}
+      {showAd && <InterstitialAd onClose={() => setShowAd(false)} />}
     </Box>
   );
 }

@@ -1,4 +1,4 @@
-import { Box, VStack, Text, Heading, Badge, HStack, Button, Input, Select, useToast, Grid, GridItem, Checkbox, SimpleGrid } from "@chakra-ui/react";
+import { Box, VStack, Text, Heading, Badge, HStack, Button, Select, useToast, Grid, GridItem, Checkbox, SimpleGrid } from "@chakra-ui/react";
 import { useState } from "react";
 
 interface UserProfileProps {

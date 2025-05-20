@@ -76,7 +76,11 @@ export default function SignupPageClient() {
         return;
       }
       if (!isValidPassword(password)) {
-        toast({ title: "비밀번호 조건 불충족", description: "영문+숫자+특수문자 포함, 8자 이상", status: "warning" });
+        toast({
+          title: "비밀번호 조건 불충족",
+          description: "영문+숫자+특수문자 포함, 8자 이상",
+          status: "warning",
+        });
         return;
       }
       if (password !== confirmPassword) {
@@ -95,13 +99,11 @@ export default function SignupPageClient() {
           email,
           password,
           username: name,
-          gender, // "남자" 또는 "여자"
+          gender,
           level,
           birthDate: new Date(birthDate).toISOString(),
           categoryList: selectedCategories,
         };
-
-        console.log("✅ 회원가입 payload:", payload);
 
         await axios.post(`${API_BASE_URL}/api/user/signup`, payload, {
           headers: { "Content-Type": "application/json" },
@@ -109,8 +111,15 @@ export default function SignupPageClient() {
 
         toast({ title: "회원가입 완료!", status: "success" });
         setTimeout(() => router.push("/login"), 2000);
-      } catch (err: any) {
-        const msg = err.response?.data?.message || "회원가입 중 오류 발생";
+      } catch (err: unknown) {
+        let msg = "회원가입 중 오류 발생";
+
+        if (axios.isAxiosError(err)) {
+          msg = err.response?.data?.message || msg;
+        } else if (err instanceof Error) {
+          msg = err.message;
+        }
+
         toast({ title: "회원가입 실패", description: msg, status: "error" });
       }
     }
@@ -125,37 +134,54 @@ export default function SignupPageClient() {
 
             {step === 1 ? (
               <>
-                <FormControl isRequired><FormLabel>이름</FormLabel>
+                <FormControl isRequired>
+                  <FormLabel>이름</FormLabel>
                   <Input value={name} onChange={(e) => setName(e.target.value)} />
                 </FormControl>
-                <FormControl isRequired><FormLabel>이메일</FormLabel>
+                <FormControl isRequired>
+                  <FormLabel>이메일</FormLabel>
                   <Flex gap={2}>
-                    <Input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setIsEmailChecked(false); setIsEmailAvailable(false); }} />
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setIsEmailChecked(false);
+                        setIsEmailAvailable(false);
+                      }}
+                    />
                     <Button colorScheme="green" onClick={checkEmail}>중복 확인</Button>
                   </Flex>
                 </FormControl>
-                <FormControl isRequired><FormLabel>비밀번호</FormLabel>
+                <FormControl isRequired>
+                  <FormLabel>비밀번호</FormLabel>
                   <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 </FormControl>
-                <FormControl isRequired><FormLabel>비밀번호 확인</FormLabel>
+                <FormControl isRequired>
+                  <FormLabel>비밀번호 확인</FormLabel>
                   <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 </FormControl>
                 <Button type="submit" colorScheme="purple" size="lg">다음</Button>
               </>
             ) : (
               <>
-                <Text textAlign="center" fontSize="sm" color="gray.600">추천 기사를 위해 아래 정보를 입력해주세요</Text>
-                <FormControl isRequired><FormLabel>성별</FormLabel>
+                <Text textAlign="center" fontSize="sm" color="gray.600">
+                  추천 기사를 위해 아래 정보를 입력해주세요
+                </Text>
+                <FormControl isRequired>
+                  <FormLabel>성별</FormLabel>
                   <Select value={gender} onChange={(e) => setGender(e.target.value)}>
                     <option value="">선택</option>
                     <option value="남자">남자</option>
                     <option value="여자">여자</option>
                   </Select>
                 </FormControl>
-                <FormControl isRequired><FormLabel>생년월일</FormLabel>
+                <FormControl isRequired>
+                  <FormLabel>생년월일</FormLabel>
                   <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
                 </FormControl>
-                <FormControl><FormLabel>관심 분야 (1개 이상)</FormLabel>
+                <FormControl>
+                  <FormLabel>관심 분야 (1개 이상)</FormLabel>
                   <Stack spacing={2}>
                     {categoryOptions.map((cat) => (
                       <Checkbox
@@ -174,7 +200,8 @@ export default function SignupPageClient() {
                     ))}
                   </Stack>
                 </FormControl>
-                <FormControl isRequired><FormLabel>영어 학습 난이도</FormLabel>
+                <FormControl isRequired>
+                  <FormLabel>영어 학습 난이도</FormLabel>
                   <RadioGroup value={level} onChange={setLevel}>
                     <Stack direction="row" spacing={4}>
                       {levels.map((lvl) => (

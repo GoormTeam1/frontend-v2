@@ -7,9 +7,9 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
-import { API_BASE_URL } from '@/config/env';
+import { API_BASE_URL } from "@/config/env";
 import Header from "@/components/Header";
-import UserProfile from "../../components/UserProfile";
+import UserProfile from "@/components/UserProfile";
 import ScrapedArticles from "@/components/ScrapedArticles";
 import WrongQuizArticles from "@/components/WrongQuizArticles";
 import Footer from "@/components/Footer";
@@ -27,7 +27,7 @@ export default function MyPage() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [tokenExists, setTokenExists] = useState(true);
   const toast = useToast();
-  const toastShown = useRef(false); // ✅ 중복 방지 플래그
+  const toastShown = useRef(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -35,7 +35,7 @@ export default function MyPage() {
     if (!token) {
       setTokenExists(false);
       if (!toastShown.current) {
-        toastShown.current = true; // ✅ 이미 띄운 경우 다시 안 띄움
+        toastShown.current = true;
         toast({
           title: "로그인 필요",
           description: "로그인 후 다시 시도해주세요.",
@@ -73,19 +73,28 @@ export default function MyPage() {
           interests: raw.categoryList,
           englishLevel: raw.level as "상" | "중" | "하",
         });
-      } catch (error: any) {
-        toast({
-          title: "에러 발생",
-          description: error.message || "회원 정보를 불러오지 못했습니다.",
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-        });
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          toast({
+            title: "에러 발생",
+            description: error.message,
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+          });
+        } else {
+          toast({
+            title: "알 수 없는 에러",
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+          });
+        }
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [toast]);
 
   const handleProfileUpdate = async (updatedData: UserData) => {
     try {
@@ -129,14 +138,16 @@ export default function MyPage() {
       });
 
       setUserData(updatedData);
-    } catch (error: any) {
-      toast({
-        title: "업데이트 실패",
-        description: error.message || "프로필 업데이트 중 오류가 발생했습니다.",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast({
+          title: "업데이트 실패",
+          description: error.message,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
     }
   };
 

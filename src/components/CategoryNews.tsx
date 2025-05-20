@@ -101,7 +101,7 @@ export default function CategoryNews() {
         const data: NewsResponse = await response.json();
         setArticles(data.content || []);
         setTotalPages(data.totalPages);
-      } catch (error) {
+      } catch {
         toast({
           title: "데이터를 불러오는데 실패했습니다",
           status: "error",
@@ -168,7 +168,7 @@ export default function CategoryNews() {
             mr={2}
           />
           <TabList flexWrap="nowrap" gap={2} overflow="hidden">
-            {visibleCategories.map((category, index) => (
+            {visibleCategories.map((category) => (
               <Tab
                 key={category.id}
                 whiteSpace="nowrap"
@@ -271,14 +271,14 @@ export default function CategoryNews() {
                         >
                           이전
                         </Button>
-                        {[...Array(totalPages)].map((_, index) => (
+                        {[...Array(totalPages)].map((_, idx) => (
                           <Button
-                            key={index}
-                            onClick={() => handlePageChange(index)}
-                            colorScheme={currentPage === index ? "purple" : "gray"}
-                            variant={currentPage === index ? "solid" : "outline"}
+                            key={idx}
+                            onClick={() => handlePageChange(idx)}
+                            colorScheme={currentPage === idx ? "purple" : "gray"}
+                            variant={currentPage === idx ? "solid" : "outline"}
                           >
-                            {index + 1}
+                            {idx + 1}
                           </Button>
                         ))}
                         <Button
