@@ -82,14 +82,12 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
 
         const headers = { Authorization: `Bearer ${token}` };
 
-        // ✅ 사용자 레벨 먼저 받아오기
         const userRes = await axios.get(`${API_BASE_URL}/api/user/me`, { headers });
         const level = userRes.data?.data?.level;
         if (["상", "중", "하"].includes(level)) {
           setSummaryLevel(level);
         }
 
-        // ✅ 요약 데이터 가져오기
         const res = await axios.get(`${API_BASE_URL}/api/summary/${newsIdNumber}`, { headers });
         setSummaries(res.data);
       } catch {
@@ -143,7 +141,7 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
         toast({ title: "스크랩이 완료되었습니다", status: "success", duration: 2000 });
       }
 
-      setIsScrapped(!isScrapped);
+      setIsScrapped((prev) => !prev);
     } catch {
       toast({ title: "스크랩 처리 중 오류 발생", status: "error", duration: 2000 });
     }
