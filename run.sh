@@ -14,22 +14,14 @@ if ! command -v npm &> /dev/null; then
   exit 1
 fi
 
-# 의존성 설치 (node_modules 없을 때만 실행)
-if [ ! -d "node_modules" ]; then
-  echo "📦 npm install 실행 중..."
-  npm install
-else
-  echo "📦 의존성(npm modules) 이미 설치됨"
-fi
+# 1. npm install
+echo "📦 npm install 실행 중..."
+npm install || { echo "❌ npm install 실패"; exit 1; }
 
-# .next 폴더 없으면 build
-if [ ! -d ".next" ]; then
-  echo "⚙️ next build 실행 중..."
-  npm run build
-else
-  echo "⚙️ 이미 빌드 완료됨 (.next 존재)"
-fi
+# 2. npm run build
+echo "⚙️ next build 실행 중..."
+npm run build || { echo "❌ 빌드 실패"; exit 1; }
 
-# 앱 실행
+# 3. npm run start
 echo "🚀 서버 실행 중 (npm run start)..."
 npm run start
