@@ -36,7 +36,6 @@ interface NewsData {
   category: string;
   publishedAt: string;
   createdAt: string;
-  scrabbed: boolean;
 }
 
 interface SummaryData {
@@ -44,6 +43,10 @@ interface SummaryData {
   newsId: number;
   level: "상" | "중" | "하";
   summary: string;
+}
+
+interface ScrapItem {
+  newsId: number;
 }
 
 export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientProps) {
@@ -59,44 +62,43 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    const fetchNews = async () => {
+    const fetchAllData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-
-        const res = await axios.get(`${API_BASE_URL}/api/news/${newsIdNumber}`, { headers });
-        setData(res.data);
-        setIsScrapped(res.data.scrabbed);
-      } catch {
-        toast({ title: "기사를 불러오지 못했습니다.", status: "error", duration: 3000 });
-      }
-    };
-
-    const fetchSummaries = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          toast({ title: "로그인이 필요합니다.", status: "warning", duration: 3000 });
-          return;
-        }
+        if (!token) return;
 
         const headers = { Authorization: `Bearer ${token}` };
+        const decoded = jwtDecode<{ sub: string }>(token);
+        const userEmail = decoded.sub;
 
-        const userRes = await axios.get(`${API_BASE_URL}/api/user/me`, { headers });
+        const [newsRes, summaryRes, scrapRes, userRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/news/${newsIdNumber}`, { headers }),
+          axios.get(`${API_BASE_URL}/api/summary/${newsIdNumber}`, { headers }),
+          axios.get(`${API_BASE_URL}/api/scrabs/${userEmail}`, { headers }),
+          axios.get(`${API_BASE_URL}/api/user/me`, { headers }),
+        ]);
+
+        setData(newsRes.data);
+        setSummaries(summaryRes.data);
+
+        const scrapList: ScrapItem[] = scrapRes.data?.content || [];
+        const isScrappedNow = scrapList.some((item) => item.newsId === newsIdNumber);
+        setIsScrapped(isScrappedNow);
+
         const level = userRes.data?.data?.level;
         if (["상", "중", "하"].includes(level)) {
           setSummaryLevel(level);
         }
-
-        const res = await axios.get(`${API_BASE_URL}/api/summary/${newsIdNumber}`, { headers });
-        setSummaries(res.data);
       } catch {
-        toast({ title: "요약 데이터를 불러오지 못했습니다.", status: "error", duration: 3000 });
+        toast({
+          title: "데이터를 불러오지 못했습니다.",
+          status: "error",
+          duration: 3000,
+        });
       }
     };
 
-    fetchNews();
-    fetchSummaries();
+    fetchAllData();
   }, [newsIdNumber, toast]);
 
   const getSummaryText = () => {
