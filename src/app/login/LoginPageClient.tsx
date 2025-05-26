@@ -43,9 +43,14 @@ export default function LoginPageClient() {
       } else {
         throw new Error("accessToken이 응답에 없습니다.");
       }
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message || "이메일 또는 비밀번호가 올바르지 않습니다.";
+    } catch (error: unknown) {
+      let message = "이메일 또는 비밀번호가 올바르지 않습니다.";
+      if (axios.isAxiosError(error)) {
+        message = error.response?.data?.message ?? message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+
       toast({
         title: "로그인 실패",
         description: message,

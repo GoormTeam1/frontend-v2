@@ -3,7 +3,6 @@
 import {
   Box,
   Image,
-  Spinner,
   IconButton,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
@@ -23,7 +22,7 @@ export default function AdBanner() {
   const [ad, setAd] = useState<AdData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isClosed, setIsClosed] = useState(false);
-  const [hasViewed, setHasViewed] = useState(false); // ✅ 중복 조회 방지
+  const [hasViewed, setHasViewed] = useState(false);
 
   useEffect(() => {
     const fetchAd = async () => {
@@ -43,7 +42,8 @@ export default function AdBanner() {
         const data = await res.json();
 
         const validAds = data.filter(
-          (item: any) => item.status === "ACTIVE" && item.type === "BANNER"
+          (item: Partial<AdData> & { status?: string; type?: string }) =>
+            item.status === "ACTIVE" && item.type === "BANNER"
         );
 
         if (validAds.length === 0) return;
@@ -52,13 +52,13 @@ export default function AdBanner() {
         const selected = validAds[randomIndex];
 
         setAd({
-          id: selected.id,
-          imageUrl: selected.imageUrl,
-          linkUrl: selected.linkUrl,
-          title: selected.title,
+          id: selected.id ?? 0,
+          imageUrl: selected.imageUrl ?? DEFAULT_BANNER_IMAGE,
+          linkUrl: selected.linkUrl ?? "#",
+          title: selected.title ?? "Banner",
         });
 
-        setHasViewed(false); // ✅ 새로운 광고에 대해 초기화
+        setHasViewed(false);
       } catch {
         // silently fail
       } finally {
@@ -69,7 +69,6 @@ export default function AdBanner() {
     fetchAd();
   }, []);
 
-  // ✅ ad가 설정되고 hasViewed === false일 때만 조회수 증가
   useEffect(() => {
     const increaseViewCount = async () => {
       if (!ad || hasViewed) return;
@@ -85,7 +84,7 @@ export default function AdBanner() {
           },
         });
 
-        setHasViewed(true); // ✅ 중복 방지
+        setHasViewed(true);
       } catch {
         // silently fail
       }

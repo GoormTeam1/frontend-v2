@@ -6,7 +6,7 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader,
   ModalFooter, ModalBody, ModalCloseButton, useDisclosure
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { API_BASE_URL } from "@/config/env";
 
 interface AdItem {
@@ -49,18 +49,7 @@ export default function AdminPageClient() {
     orderer: ""
   });
 
-  useEffect(() => {
-    setMounted(true);
-    const token = localStorage.getItem("admin_token");
-    if (token) {
-      setIsAuthenticated(true);
-      fetchAds();
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchAds = async () => {
+  const fetchAds = useCallback(async () => {
     try {
       const token = localStorage.getItem("admin_token");
       if (!token) throw new Error("토큰 없음");
@@ -73,12 +62,24 @@ export default function AdminPageClient() {
 
       const data = await res.json();
       setAds(data);
-    } catch (err) {
-      toast({ title: "광고 불러오기 실패", status: "error" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "알 수 없는 오류";
+      toast({ title: "광고 불러오기 실패", description: message, status: "error" });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    setMounted(true);
+    const token = localStorage.getItem("admin_token");
+    if (token) {
+      setIsAuthenticated(true);
+      fetchAds();
+    } else {
+      setLoading(false);
+    }
+  }, [fetchAds]);
 
   const handleLogin = async () => {
     try {
@@ -98,8 +99,12 @@ export default function AdminPageClient() {
       setIsAuthenticated(true);
       toast({ title: "로그인 성공", status: "success" });
       fetchAds();
-    } catch (err: any) {
-      toast({ title: "로그인 실패", description: err.message, status: "error" });
+    } catch (error: unknown) {
+      toast({
+        title: "로그인 실패",
+        description: error instanceof Error ? error.message : "알 수 없는 오류",
+        status: "error",
+      });
     }
   };
 

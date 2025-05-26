@@ -5,7 +5,6 @@ import {
   Text,
   Select,
   Image,
-  Stack,
   Button,
   Flex,
   SimpleGrid,

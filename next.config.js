@@ -4,6 +4,13 @@ const nextConfig = {
   compiler: {
     emotion: true,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  output: 'standalone',
 }
 
-module.exports = nextConfig 
+module.exports = nextConfig

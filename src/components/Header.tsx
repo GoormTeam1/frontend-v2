@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Box, Heading, Flex, Button, Text, HStack, Tabs, TabList, Tab,
+  Box, Flex, Button, Text, Tabs, TabList, Tab,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -18,7 +18,7 @@ interface DecodedToken {
 export default function Header() {
   const [formattedDate, setFormattedDate] = useState("");
   const [user, setUser] = useState<DecodedToken | null>(null);
-  const [mounted, setMounted] = useState(false); // ✅ hydration-safe
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 

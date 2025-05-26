@@ -54,16 +54,15 @@ export default function WrongQuizArticles() {
         if (!res.ok) throw new Error("오답 기사 목록 불러오기 실패");
 
         const data: WrongQuizArticle[] = await res.json();
-
-        // 학습 중인 것만 필터링
         const learningArticles = data.filter(article => article.status === "learning");
 
         setArticles(learningArticles);
         setStartIdx(0);
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "오답 기사 데이터를 불러오지 못했습니다.";
         toast({
           title: "데이터 오류",
-          description: err.message || "오답 기사 데이터를 불러오지 못했습니다.",
+          description: msg,
           status: "error",
           duration: 3000,
           isClosable: true,
@@ -74,7 +73,7 @@ export default function WrongQuizArticles() {
     };
 
     fetchWrongArticles();
-  }, []);
+  }, [toast]);
 
   const handlePrev = () => setStartIdx((prev) => Math.max(prev - visibleCount, 0));
   const handleNext = () =>

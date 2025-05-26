@@ -29,8 +29,6 @@ interface NewsArticle {
   publishedAt: string;
 }
 
-type LearningStatus = "learning" | "not_learning" | "completed";
-
 const DEFAULT_IMAGE = "https://via.placeholder.com/400x200?text=No+Image";
 
 const formatDate = (dateString: string) => {
@@ -66,10 +64,11 @@ export default function ScrapedArticlesSlider() {
 
         const data = await res.json();
         setScraps(data.content || []);
-      } catch (err: any) {
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "스크랩 목록을 불러오지 못했습니다.";
         toast({
           title: "스크랩 데이터 오류",
-          description: err.message || "스크랩 목록을 불러오지 못했습니다.",
+          description: message,
           status: "error",
           duration: 3000,
           isClosable: true,
@@ -79,7 +78,7 @@ export default function ScrapedArticlesSlider() {
     };
 
     fetchScrapData();
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -90,10 +89,11 @@ export default function ScrapedArticlesSlider() {
           )
         );
         setArticles(results);
-      } catch {
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "기사 데이터를 불러오지 못했습니다.";
         toast({
           title: "기사 정보 오류",
-          description: "기사 데이터를 불러오지 못했습니다.",
+          description: message,
           status: "error",
           duration: 3000,
           isClosable: true,
@@ -103,9 +103,12 @@ export default function ScrapedArticlesSlider() {
       }
     };
 
-    if (scraps.length > 0) fetchArticles();
-    else setLoading(false);
-  }, [scraps]);
+    if (scraps.length > 0) {
+      fetchArticles();
+    } else {
+      setLoading(false);
+    }
+  }, [scraps, toast]);
 
   const handlePrev = () => setStartIdx((prev) => Math.max(prev - visibleCount, 0));
   const handleNext = () =>
