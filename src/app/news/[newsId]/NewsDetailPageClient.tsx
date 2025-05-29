@@ -158,6 +158,13 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
     router.push(`/quiz/${matched.summaryId}`);
   };
 
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "날짜 없음";
+    const parsed = Date.parse(dateStr);
+    if (isNaN(parsed)) return "날짜 없음";
+    return new Date(parsed).toISOString().slice(0, 10);
+  };
+
   if (!mounted || !data) return null;
 
   return (
@@ -170,7 +177,7 @@ export default function NewsDetailPageClient({ newsId }: NewsDetailPageClientPro
           <Flex justify="space-between" align="center">
             <Flex align="center" gap={3}>
               <Text fontSize="sm" color="gray.600">
-                {new Date(data.publishedAt).toISOString().slice(0, 10)}
+                {formatDate(data.publishedAt)}
               </Text>
               {data.sourceLink && (
                 <ChakraLink href={data.sourceLink} isExternal>
