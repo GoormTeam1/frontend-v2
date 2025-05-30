@@ -42,7 +42,11 @@ pipeline {
 
                     sh """
                     mkdir -p ${deployTarget}
-                    cp -r ${env.BUILD_DIR}/* ${deployTarget}/
+                    # 빌드 결과물 복사 (.next 포함)
+                    cp -r ${env.BUILD_DIR}/.next ${deployTarget}/
+                    cp -r ${env.BUILD_DIR}/package.json ${deployTarget}/
+                    cp -r ${env.BUILD_DIR}/public ${deployTarget}/ || true
+                    cp -r ${env.BUILD_DIR}/.env.production ${deployTarget}/ || true
 
                     cd ${deployTarget}
                     npm install --omit=dev
@@ -60,7 +64,7 @@ pipeline {
 
                     sh """
                     cd ${deployTarget}
-                    nohup npm run start > next.log 2>&1 &
+                    nohup npm run start -p 3000 -H 0.0.0.0 > next.log 2>&1 &
                     echo \$! > ${DEPLOY_PATH}/next.pid
                     echo "🎉 새 버전 실행 시작 (PID: \$(cat ${DEPLOY_PATH}/next.pid))"
                     """
