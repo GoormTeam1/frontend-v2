@@ -4,33 +4,38 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Git 저장소에서 cicd 브랜치만 체크아웃
-                git branch: 'cicd', url: 'https://github.com/GoormTeam1/frontend-v2.git'
+                git branch: 'cicd', url: 'https://github.com/your-org/your-repo.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                echo '📦 npm install 시작...'
                 sh 'npm install'
             }
         }
 
         stage('Build') {
             steps {
-                echo '⚙️ next build 시작...'
                 sh 'npm run build'
             }
         }
 
-        stage('Verify Build Artifacts') {
+        stage('Archive Artifacts by Timestamp') {
             steps {
                 script {
-                    if (!fileExists('.next')) {
-                        error("❌ 빌드 실패: .next 폴더 없음")
-                    }
+                    def buildTimestamp = new Date().format("yyyyMMdd-HHmmss")
+                    def buildVersion = "v${buildTimestamp}"
+                    def targetDir = "/var/lib/jenkins/artifacts/nextjs/${buildVersion}"
+
+                    sh """
+                    mkdir -p ${targetDir}
+                    cp -r .next ${targetDir}/
+                    cp package.json ${targetDir}/
+                    cp -r public ${targetDir}/ || true
+                    cp .env.production ${targetDir}/ || true
+                    """
+                    echo "📦 빌드 결과물이 ${targetDir}에 저장되었습니다."
                 }
-                echo '✅ 빌드 성공: .next 폴더 확인'
             }
         }
     }
