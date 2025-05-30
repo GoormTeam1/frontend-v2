@@ -1,0 +1,80 @@
+pipeline {
+    agent any
+
+    environment {
+        ARTIFACTS_PATH = "/var/lib/jenkins/artifacts/nextjs"  // 빌드 산출물 경로
+        DEPLOY_PATH = "/var/lib/jenkins/deployed/nextjs"      // 배포 디렉토리
+        APP_NAME = "nextjs-app"
+    }
+
+    stages {
+        stage('Select Build Version') {
+            steps {
+                script {
+                    def version = sh(script: "ls -t ${ARTIFACTS_PATH} | head -n 1", returnStdout: true).trim()
+                    env.BUILD_VERSION = version
+                    env.BUILD_DIR = "${ARTIFACTS_PATH}/${version}"
+                    echo "📦 배포할 빌드 버전: ${env.BUILD_VERSION}"
+                }
+            }
+        }
+
+        stage('Kill Existing Process') {
+            steps {
+                script {
+                    sh """
+                    if [ -f ${DEPLOY_PATH}/next.pid ]; then
+                      echo "🛑 기존 프로세스 종료";
+                      kill \$(cat ${DEPLOY_PATH}/next.pid) || true;
+                      rm -f ${DEPLOY_PATH}/next.pid;
+                    else
+                      echo "✅ 실행 중인 프로세스 없음";
+                    fi
+                    """
+                }
+            }
+        }
+
+        stage('Deploy New Version') {
+            steps {
+                script {
+                    def deployTarget = "${DEPLOY_PATH}/${env.BUILD_VERSION}"
+
+                    sh """
+                    mkdir -p ${deployTarget}
+                    cp -r ${env.BUILD_DIR}/* ${deployTarget}/
+
+                    cd ${deployTarget}
+                    npm install --omit=dev
+
+                    echo "🚀 새 버전 준비 완료 (${deployTarget})"
+                    """
+                }
+            }
+        }
+
+        stage('Run New Version') {
+            steps {
+                script {
+                    def deployTarget = "${DEPLOY_PATH}/${env.BUILD_VERSION}"
+
+                    sh """
+                    cd ${deployTarget}
+                    nohup npm run start > next.log 2>&1 &
+                    echo \$! > ${DEPLOY_PATH}/next.pid
+                    echo "🎉 새 버전 실행 시작 (PID: \$(cat ${DEPLOY_PATH}/next.pid))"
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "🎉 CD 배포 및 실행 성공 (버전: ${env.BUILD_VERSION})"
+        }
+        failure {
+            echo "❌ 배포/실행 실패"
+        }
+    }
+}
