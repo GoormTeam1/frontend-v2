@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Git 저장소에서 cicd 브랜치만 체크아웃!
+                // Git 저장소에서 cicd 브랜치만 체크아웃
                 git branch: 'cicd', url: 'https://github.com/GoormTeam1/frontend-v2.git'
             }
         }
