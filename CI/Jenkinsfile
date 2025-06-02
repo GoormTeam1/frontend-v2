@@ -1,10 +1,15 @@
 pipeline {
     agent any
 
+    environment {
+        SLACK_WEBHOOK_URL = credentials('slack-webhook')
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'cicd', url: 'https://github.com/your-org/your-repo.git'
+                git branch: 'cicd', url: 'https://github.com/GoormTeam1/frontend-v2.git'
+                echo '🔄 소스 코드 체크아웃 완료'
             }
         }
 
@@ -42,10 +47,22 @@ pipeline {
 
     post {
         success {
-            echo '🎉 빌드 성공'
+            script {
+                echo '🎉 빌드 성공'
+                sh """
+                curl -X POST -H 'Content-type: application/json' \
+                --data '{"text":"🎉 *빌드 성공* - Frontend-v2 브랜치: cicd, 빌드 완료"}' ${SLACK_WEBHOOK_URL}
+                """
+            }
         }
         failure {
-            echo '❌ 빌드 실패'
+            script {
+                echo '❌ 빌드 실패'
+                sh """
+                curl -X POST -H 'Content-type: application/json' \
+                --data '{"text":"❌ *빌드 실패* - Frontend-v2 브랜치: cicd, 에러 발생"}' ${SLACK_WEBHOOK_URL}
+                """
+            }
         }
     }
 }
