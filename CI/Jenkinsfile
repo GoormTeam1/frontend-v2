@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'cicd', url: 'https://github.com/GoormTeam1/frontend-v2.git'
+                git branch: 'main', url: 'https://github.com/GoormTeam1/frontend-v2.git'
                 echo '🔄 소스 코드 체크아웃 완료'
             }
         }
