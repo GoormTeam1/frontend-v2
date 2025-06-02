@@ -1,0 +1,133 @@
+pipeline {
+    agent any
+
+    environment {
+        ARTIFACTS_PATH = "/var/lib/jenkins/artifacts/nextjs"
+        DEPLOY_PATH = "/var/lib/jenkins/deployed/nextjs"
+        APP_NAME = "nextjs-app"
+        SLACK_WEBHOOK_URL = credentials('slack-webhook')
+    }
+
+    stages {
+        stage('Select Build Version') {
+            steps {
+                script {
+                    def versions = sh(script: "ls -t ${ARTIFACTS_PATH}", returnStdout: true).trim().split('\n')
+                    env.BUILD_VERSION = versions[0]
+                    env.BUILD_DIR = "${ARTIFACTS_PATH}/${env.BUILD_VERSION}"
+                    echo "📦 배포할 빌드 버전: ${env.BUILD_VERSION}"
+
+                    if (versions.size() > 1) {
+                        env.PREVIOUS_VERSION = versions[1]
+                        env.PREVIOUS_DIR = "${ARTIFACTS_PATH}/${env.PREVIOUS_VERSION}"
+                    } else {
+                        env.PREVIOUS_VERSION = ""
+                        env.PREVIOUS_DIR = ""
+                    }
+                }
+            }
+        }
+
+        stage('Kill Existing Process') {
+            steps {
+                script {
+                    sh """
+                    if pm2 list | grep -q '${APP_NAME}'; then
+                      echo "🛑 기존 pm2 프로세스 종료";
+                      pm2 delete ${APP_NAME};
+                    else
+                      echo "✅ 실행 중인 pm2 프로세스 없음";
+                    fi
+                    """
+                }
+            }
+        }
+
+        stage('Deploy New Version') {
+            steps {
+                script {
+                    def deployTarget = "${DEPLOY_PATH}/${env.BUILD_VERSION}"
+
+                    sh """
+                    mkdir -p ${deployTarget}
+                    cp -r ${env.BUILD_DIR}/.next ${deployTarget}/
+                    cp -r ${env.BUILD_DIR}/package.json ${deployTarget}/
+                    cp -r ${env.BUILD_DIR}/public ${deployTarget}/ || true
+                    cp -r ${env.BUILD_DIR}/.env.production ${deployTarget}/ || true
+
+                    cd ${deployTarget}
+                    npm install --omit=dev
+
+                    echo "🚀 새 버전 준비 완료 (${deployTarget})"
+                    """
+                }
+            }
+        }
+
+        stage('Run New Version') {
+            steps {
+                script {
+                    def deployTarget = "${DEPLOY_PATH}/${env.BUILD_VERSION}"
+
+                    sh """
+                    cd ${deployTarget}
+                    pm2 start npm --name "${APP_NAME}" -- run start -- -p 3000 -H 0.0.0.0
+                    pm2 save
+                    echo "🎉 새 버전 실행 시작 (pm2 관리)"
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            script {
+                echo "🎉 CD 배포 및 실행 성공 (버전: ${env.BUILD_VERSION})"
+                sh """
+                curl -X POST -H 'Content-type: application/json' --data '{"text":"🎉 *배포 성공* (버전: ${env.BUILD_VERSION})"}' ${SLACK_WEBHOOK_URL}
+                """
+            }
+        }
+
+        failure {
+            script {
+                echo "❌ 배포 실패"
+                sh """
+                curl -X POST -H 'Content-type: application/json' --data '{"text":"❌ *배포 실패* (버전: ${env.BUILD_VERSION}) - 롤백 시도"}' ${SLACK_WEBHOOK_URL}
+                """
+
+                if (env.PREVIOUS_VERSION) {
+                    echo "⚠️ 이전 버전 롤백 시도 (${env.PREVIOUS_VERSION})"
+                    def rollbackTarget = "${DEPLOY_PATH}/${env.PREVIOUS_VERSION}"
+
+                    sh """
+                    mkdir -p ${rollbackTarget}
+                    cp -r ${env.PREVIOUS_DIR}/.next ${rollbackTarget}/
+                    cp -r ${env.PREVIOUS_DIR}/package.json ${rollbackTarget}/
+                    cp -r ${env.PREVIOUS_DIR}/public ${rollbackTarget}/ || true
+                    cp -r ${env.PREVIOUS_DIR}/.env.production ${rollbackTarget}/ || true
+
+                    cd ${rollbackTarget}
+                    npm install --omit=dev
+
+                    if pm2 list | grep -q '${APP_NAME}'; then
+                      pm2 delete ${APP_NAME};
+                    fi
+                    pm2 start npm --name "${APP_NAME}" -- run start -- -p 3000 -H 0.0.0.0
+                    pm2 save
+                    """
+
+                    sh """
+                    curl -X POST -H 'Content-type: application/json' --data '{"text":"🔄 *롤백 완료* (버전: ${env.PREVIOUS_VERSION})"}' ${SLACK_WEBHOOK_URL}
+                    """
+                } else {
+                    echo "❌ 롤백할 이전 버전이 없습니다."
+                    sh """
+                    curl -X POST -H 'Content-type: application/json' --data '{"text":"❌ *롤백 실패* - 이전 버전 없음"}' ${SLACK_WEBHOOK_URL}
+                    """
+                }
+            }
+        }
+    }
+}
