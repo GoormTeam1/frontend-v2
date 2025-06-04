@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { jwtDecode } from "jwt-decode"; // ✅ 명시적 구조 분해 import
+import { jwtDecode } from "jwt-decode";
 
 const BACKEND_BASE_URL = "http://10.0.2.225:8080";
 
@@ -28,16 +28,25 @@ async function handleRequest(
     headers.set(key, value);
   });
 
-  // Authorization → X-User-Email
+  // Authorization → 유지
   const rawAuth = req.headers.get("authorization");
+  if (rawAuth) {
+    headers.set("Authorization", rawAuth); // ✅ Authorization 헤더 그대로 전달
+  }
+
+  // 디코딩해서 X-User-Email 추가
   const token = rawAuth?.startsWith("Bearer ") ? rawAuth.replace("Bearer ", "") : null;
   const email = getEmailFromToken(token);
   if (email) {
     headers.set("X-User-Email", email);
   }
 
-  const body =
-    ["POST", "PATCH", "PUT", "DELETE"].includes(method) ? await req.text() : undefined;
+  // POST, PUT, PATCH 등 본문 있는 요청 처리
+  const hasBody = ["POST", "PATCH", "PUT", "DELETE"].includes(method);
+  if (hasBody) {
+    headers.set("Content-Type", "application/json"); // ✅ 명시적으로 설정
+  }
+  const body = hasBody ? await req.text() : undefined;
 
   console.log(`[${method}] 요청 URL:`, url);
   console.log(`[${method}] 요청 헤더:`, Object.fromEntries(headers.entries()));
