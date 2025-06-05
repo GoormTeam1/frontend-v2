@@ -31,8 +31,11 @@ interface NewsArticle {
 
 const DEFAULT_IMAGE = "https://via.placeholder.com/400x200?text=No+Image";
 
+// ✅ 안전한 날짜 포맷 함수
 const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
+  const date = new Date(`${dateString}T00:00:00Z`);
+  if (isNaN(date.getTime())) return "날짜 오류";
+
   return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
 };
 

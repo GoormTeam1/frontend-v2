@@ -27,8 +27,10 @@ interface WrongQuizArticle {
 
 const DEFAULT_IMAGE = "https://via.placeholder.com/400x200?text=No+Image";
 
+// ✅ 날짜 오류 방지용 함수
 const formatDate = (date: string) => {
-  const d = new Date(date);
+  const d = new Date(`${date}T00:00:00Z`);
+  if (isNaN(d.getTime())) return "날짜 오류";
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 };
 
